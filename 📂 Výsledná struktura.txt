@@ -1,0 +1,20 @@
+mojeAI/
+├── app.py
+├── spustit.bat          ← ČESKÁ verze (bez diakritiky)
+├── spustit_en.bat       ← ANGLICKÁ verze
+├── requirements.txt
+├── www/
+│   ├── ChromiumPortable/
+│   │   └── ChromiumPortable.exe
+│   ├── IronPortable/
+│   │   └── IronPortable.exe
+│   ├── LibreWolfPortable/
+│   │   └── LibreWolfPortable.exe
+│   └── OperaPortable/
+│       └── OperaPortable.exe
+├── templates/
+│   └── index.html
+├── modely/
+├── api_klic/
+├── pamet/
+└── data/

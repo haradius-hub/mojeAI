@@ -1,0 +1,58 @@
+# ============================================================
+#  MojeAI - .gitignore
+#  Cíl: do gitu NIKDY nesmí velké binárky, secrets ani osobní data.
+# ============================================================
+
+# ---- Modely a binárky (velmi velké, GB) ----
+modely/
+*.gguf
+*.ggml
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.onnx
+
+# ---- Portable prohlížeče (stovky MB) ----
+www/*/
+!www/README.md
+
+# ---- Runtime data (osobní vzpomínky, vektorová DB) ----
+data/
+pamet/
+
+# ---- Osobní konfigurace (obsahuje cesty uživatele) ----
+config.json
+
+# ---- API klíče (skutečné klíče NIKDY do gitu) ----
+api_klic/*.txt
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# ---- Logy ----
+*.log
+server.log
+
+# ---- OS specifické ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+*~

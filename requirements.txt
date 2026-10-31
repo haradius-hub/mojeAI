@@ -1,0 +1,10 @@
+flask
+flask-cors
+chromadb
+sentence-transformers
+google-generativeai
+requests
+llama-cpp-python
+torch
+transformers
+accelerate

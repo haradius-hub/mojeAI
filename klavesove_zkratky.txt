@@ -1,0 +1,124 @@
+============================================================
+        MOJEAI - KLÁVESOVÉ ZKRATKY A OVLÁDÁNÍ
+============================================================
+
+1. OVLÁDÁNÍ APLIKACE (ČERNÉ OKNO / TERMINÁL)
+------------------------------------------------------------
+  CTRL + C         = Ukončení aplikace (zastavení serveru)
+  
+  CTRL + Z         = Pozastavení běhu (Windows)
+  CTRL + D         = Ukončení (Linux/macOS)
+
+  ŠIPKA NAHORU     = Zobrazení předchozího příkazu (historie)
+  ŠIPKA DOLŮ      = Zobrazení dalšího příkazu
+
+  Kliknutí myší    = Označení/označení textu pro kopírování
+  Pravé tlačítko   = Vložení textu do okna
+
+  CTRL + A         = Označit veškerý text v okně
+  CTRL + C (v okně)= Zkopírovat označený text
+
+
+2. OVLÁDÁNÍ WEBOVÉHO ROZHRANÍ (PROHLÍŽEČ)
+------------------------------------------------------------
+  Enter            = Odeslat zprávu (pokud není Shift stisknut)
+  Shift + Enter    = Nový řádek v textovém poli
+  CTRL + Enter     = Odeslat zprávu (alternativa)
+
+  CTRL + A         = Označit veškerý text v poli
+  CTRL + C         = Zkopírovat označený text
+  CTRL + V         = Vložit text z clipboardu
+  CTRL + X         = Vyjmout označený text
+
+  CTRL + Z         = Zpět (v textovém poli)
+  CTRL + Y         = Znovu (v textovém poli)
+
+  F5               = Obnovit stránku (refresh)
+  CTRL + R         = Obnovit stránku (alternativa)
+
+  CTRL + W         = Zavřít aktuální kartu prohlížeče
+
+
+3. SPUŠTĚNÍ APLIKACE
+------------------------------------------------------------
+
+  SPUSTIT.BAT (Windows)
+  --------------------
+  Poklepáním na soubor spustit.bat ve složce mojeAI/
+  NEBO v příkazové řádce (CMD):
+    cd cesta\k\mojeAI
+    spustit.bat
+
+  SPUSTIT.SH (Linux/macOS)
+  ------------------------
+  V terminálu:
+    cd cesta/k/mojeAI
+    ./spustit.sh
+
+  RUČNÍ SPUŠTĚNÍ (přes Python)
+  ----------------------------
+    python app.py
+
+  SPUŠTĚNÍ NA KONKRÉTNÍM PORTU
+  ----------------------------
+  V souboru app.py na konci změňte:
+    app.run(debug=False, host='0.0.0.0', port=5000)
+  na např. port=8080
+
+  SPUŠTĚNÍ POUZE PRO LOKÁLNÍ PŘÍSTUP
+  -----------------------------------
+  V souboru app.py na konci změňte:
+    host='localhost'
+  místo host='0.0.0.0'
+
+
+4. UKONČENÍ APLIKACE
+------------------------------------------------------------
+  V černém okně stiskněte:
+    CTRL + C
+
+  Poté potvrďte případný dotaz písmenem 'y' nebo 'a'
+
+  Při zavření okna křížkem (❌) se aplikace ukončí také,
+  ale doporučuje se CTRL+C pro korektní ukončení.
+
+
+5. OTEVŘENÍ APLIKACE V PROHLÍŽEČI
+------------------------------------------------------------
+  Po spuštění aplikace se objeví zpráva:
+    🌐 Otevři v prohlížeči: http://localhost:5000
+
+  Stačí:
+    - Poklepat na odkaz (v některých terminálech)
+    - Nebo ručně zadat do adresního řádku prohlížeče
+
+  PRO PŘÍSTUP Z JINÉHO ZAŘÍZENÍ VE STEJNÉ SÍTI:
+    http://192.168.x.x:5000  (IP adresa vašeho počítače)
+
+
+6. PROBLÉMY A ŘEŠENÍ
+------------------------------------------------------------
+  PORT 5000 JE OBSAZENÝ
+  ---------------------
+  - Ukončete jinou aplikaci, která port používá
+  - Nebo změňte port v app.py (viz bod 3)
+
+  APLIKACE NEREAGUJE
+  ------------------
+  - Stiskněte CTRL+C pro ukončení
+  - Spusťte znovu spustit.bat
+
+  CHYBA "MODULE NOT FOUND"
+  ------------------------
+  - Spusťte: pip install -r requirements.txt
+
+  CHYBA "ADDRESS ALREADY IN USE"
+  ------------------------------
+  - Ukončete všechny procesy Pythonu v Task Manageru
+  - Nebo změňte port
+
+
+============================================================
+      VERZE APLIKACE: MojeAI 1.0
+      POSLEDNÍ AKTUALIZACE: 24. července 2026
+============================================================

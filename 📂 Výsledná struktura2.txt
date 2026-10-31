@@ -1,0 +1,14 @@
+mojeAI/
+├── spustit.bat          ← HLAVNÍ (vybere CPU/GPU)
+├── spustit_cpu.bat      ← CPU verze (spolehlivá)
+├── spustit_gpu.bat      ← GPU verze (zkusí CUDA)
+├── app.py
+├── requirements.txt
+├── www/
+│   └── (portable prohlížeče)
+├── templates/
+│   └── index.html
+├── modely/
+├── api_klic/
+├── pamet/
+└── data/
