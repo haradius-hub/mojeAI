@@ -87,6 +87,8 @@ def chat():
         return jsonify({'odpoved': 'Dotaz musí být text do 20 000 znaků.'}), 400
     if not isinstance(model_id, str) or len(model_id) > 200:
         return jsonify({'odpoved': 'Neplatný identifikátor modelu.'}), 400
+    if not isinstance(force_search, bool):
+        return jsonify({'odpoved': 'Neplatná hodnota force_search.'}), 400
     if not dotaz and not nahrany_soubor:
         return jsonify({'odpoved': 'Prosim napis otazku nebo nahraj soubor.'})
 
