@@ -25,10 +25,12 @@ def zobraz_slozky():
 
 @memory_bp.route('/api/slozka', methods=['POST'])
 def pridat_slozku():
-    data = request.json
-    cesta = data.get('cesta', '').strip()
-    if not cesta or not os.path.exists(cesta):
-        return jsonify({'status': 'error', 'zprava': 'Složka neexistuje'})
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get('cesta'), str):
+        return jsonify({'status': 'error', 'zprava': 'Neplatná cesta ke složce.'}), 400
+    cesta = os.path.realpath(data['cesta'].strip())
+    if not cesta or not os.path.isdir(cesta):
+        return jsonify({'status': 'error', 'zprava': 'Složka neexistuje nebo nejde o adresář.'}), 400
     
     config = Config.nacti()
     if cesta not in config['pristupne_slozky']:
@@ -40,8 +42,10 @@ def pridat_slozku():
 
 @memory_bp.route('/api/slozka', methods=['DELETE'])
 def odebrat_slozku():
-    data = request.json
-    cesta = data.get('cesta', '').strip()
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get('cesta'), str):
+        return jsonify({'status': 'error', 'zprava': 'Neplatná cesta ke složce.'}), 400
+    cesta = os.path.realpath(data['cesta'].strip())
     config = Config.nacti()
     if cesta in config['pristupne_slozky']:
         config['pristupne_slozky'].remove(cesta)
