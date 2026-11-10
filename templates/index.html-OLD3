@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MojeAI - Asistent s pamětí</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- Samotný panel (už jen jednou) -->
+<div class="sidebar" id="sidebar">
+    <h2>⚙️ Nastavení</h2>
+    
+    <label>🧠 Model</label>
+    <select id="modelSelect"><option value="">Načítám...</option></select>
+    
+    <div class="section">
+        <label>🔑 API klíč pro zvolený model</label>
+        <input type="password" id="apiKlic" placeholder="Vlož API klíč...">
+        <button onclick="ulozKlic()">💾 Uložit klíč</button>
+        <div style="font-size:11px;color:#8b949e;margin-top:4px;">Uloží se přímo na server.</div>
+    </div>
+    
+    <div class="section">
+        <label>📂 Připojené složky</label>
+        <div class="flex-row">
+            <input type="text" id="slozkaCesta" placeholder="Cesta ke složce (např. C:\Projekty)">
+        </div>
+        <button class="secondary" onclick="pridatSlozku()">➕ Připojit složku</button>
+        <div id="slozkyList" style="font-size:12px;color:#8b949e;margin-top:6px;"></div>
+    </div>
+    
+    <div class="section">
+        <label>📝 Systémový prompt</label>
+        <textarea id="systemPrompt" rows="2" placeholder="Jak se má model chovat?"></textarea>
+        <button class="secondary" onclick="ulozPrompt()">💾 Uložit prompt</button>
+    </div>
+    
+    <div class="section" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" id="internetPovolen" onchange="ulozInternet()">
+            🌐 Povolit internet
+        </label>
+    </div>
+
+    <div class="section" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="margin:0;display:flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" id="gpuPovolen" onchange="ulozGpu()">
+            🚀 Použít GPU
+        </label>
+        <span style="font-size:11px;color:#8b949e;" id="gpuStatus">Detekce...</span>
+    </div>
+    <div class="gpu-info" id="gpuDetail"></div>
+
+    <div class="section">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+            <label style="margin:0;">🧠 Paměť</label>
+            <button onclick="nactiPamet()" style="width:auto;padding:2px 10px;font-size:11px;background:#1f6feb;">↻</button>
+        </div>
+        <div class="memory-box" id="memoryList"><div style="color:#8b949e;font-size:12px;">Načítám...</div></div>
+    </div>
+</div>
+
+<div class="chat">
+    <div class="chat-header">
+        <!-- PŘIDANÉ TLAČÍTKO -->
+        <button id="toggleBtn" class="toggle-btn-inline" onclick="toggleSidebar()">◀</button>
+        
+        <h1>🤖 MojeAI</h1>
+        <span class="status-badge" id="modelStatus">📍 Načítám...</span>
+    </div>
+    <div class="chat-messages" id="messages">
+        <div class="message assistant">👋 Ahoj! Zeptej se mě na cokoli. Mám přístup k tvé paměti a připojeným složkám.<span class="time">Právě teď</span></div>
+    </div>
+    <div class="chat-input">
+        <input type="file" id="fileInput" style="display: none;" accept=".pdf,.txt,.md,.py,.csv">
+        <button onclick="document.getElementById('fileInput').click()" title="Nahrát soubor" style="background:transparent; border:1px solid #30363d; padding: 8px; border-radius: 8px; color:#8b949e; cursor:pointer;">📎</button>
+        <textarea id="userInput" rows="2" placeholder="Napiš otázku... (Pro hledání na netu začni s //, Shift+Enter pro nový řádek)"></textarea>
+        <button onclick="poslatDotaz()">➤ Odeslat</button>
+    </div>
+    <div class="footer">
+        <span id="statusText">✅ Připraveno</span>
+        <span class="model-info" id="aktivniModel">🔹 žádný</span>
+    </div>
+</div>
+
+<!-- Načtení hlavního logického skriptu -->
+<script src="/static/app.js"></script>
+
+<!-- Skript pro skrývání panelu (správně uvnitř <script> tagu) -->
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const btn = document.getElementById('toggleBtn');
+    sidebar.classList.toggle('hidden');
+    
+    if (sidebar.classList.contains('hidden')) {
+        btn.textContent = '▶';
+        btn.classList.add('shifted');
+    } else {
+        btn.textContent = '◀';
+        btn.classList.remove('shifted');
+    }
+}
+</script>
+
+</body>
+</html>

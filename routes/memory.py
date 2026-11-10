@@ -1,0 +1,50 @@
+# routes/memory.py
+import os
+import glob
+from flask import Blueprint, request, jsonify
+from config import Config
+from core.memory import memory_manager
+
+memory_bp = Blueprint('memory', __name__)
+
+@memory_bp.route('/api/pamet', methods=['GET'])
+def zobraz_pamet():
+    return jsonify(memory_manager.ziskej_posledni(30))
+
+@memory_bp.route('/api/slozky', methods=['GET'])
+def zobraz_slozky():
+    config = Config.nacti()
+    slozky = []
+    for cesta in config.get('pristupne_slozky', []):
+        if os.path.exists(cesta):
+            pocet = len(glob.glob(os.path.join(cesta, "**/*"), recursive=True))
+            slozky.append({'cesta': cesta, 'pocet': pocet})
+        else:
+            slozky.append({'cesta': cesta, 'pocet': 0, 'chybi': True})
+    return jsonify(slozky)
+
+@memory_bp.route('/api/slozka', methods=['POST'])
+def pridat_slozku():
+    data = request.json
+    cesta = data.get('cesta', '').strip()
+    if not cesta or not os.path.exists(cesta):
+        return jsonify({'status': 'error', 'zprava': 'Složka neexistuje'})
+    
+    config = Config.nacti()
+    if cesta not in config['pristupne_slozky']:
+        config['pristupne_slozky'].append(cesta)
+        Config.uloz(config)
+    
+    # Zjednodušená indexace pro ukázku
+    return jsonify({'status': 'ok', 'zprava': 'Složka přidána (indexace přesunuta)'})
+
+@memory_bp.route('/api/slozka', methods=['DELETE'])
+def odebrat_slozku():
+    data = request.json
+    cesta = data.get('cesta', '').strip()
+    config = Config.nacti()
+    if cesta in config['pristupne_slozky']:
+        config['pristupne_slozky'].remove(cesta)
+        Config.uloz(config)
+        return jsonify({'status': 'ok'})
+    return jsonify({'status': 'error', 'zprava': 'Nenalezeno'})

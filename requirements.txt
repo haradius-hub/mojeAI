@@ -1,10 +1,8 @@
-flask
-flask-cors
-chromadb
-sentence-transformers
-google-generativeai
-requests
-llama-cpp-python
-torch
-transformers
-accelerate
+# Lehke zavislosti (bez torch, bez chromadb)
+flask==3.0.0
+flask-cors==4.0.0
+requests==2.31.0
+google-generativeai==0.3.2
+openai==1.10.0
+huggingface-hub==0.20.3
+ddgs

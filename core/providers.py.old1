@@ -1,0 +1,152 @@
+# core/providers.py
+import os
+import requests
+from config import Config
+
+class Providers:
+    @staticmethod
+    def nacti_klic(provider):
+        cesta = os.path.join(Config.API_KLICE_DIR, f"{provider}.txt")
+        if os.path.exists(cesta):
+            with open(cesta, "r", encoding="utf-8") as f:
+                return f.read().strip()
+        return None
+
+    @staticmethod
+    def uloz_klic(provider, klic):
+        cesta = os.path.join(Config.API_KLICE_DIR, f"{provider}.txt")
+        with open(cesta, "w", encoding="utf-8") as f:
+            f.write(klic.strip())
+        return True
+
+    @staticmethod
+    def dostupne_modely():
+        dostupne = []
+        # 1. Cloudove API
+        for soubor in os.listdir(Config.API_KLICE_DIR):
+            if soubor.endswith('.txt'):
+                provider = soubor.replace('.txt', '')
+                if Providers.nacti_klic(provider):
+                    dostupne.append({'id': provider, 'nazev': provider.capitalize(), 'typ': 'api'})
+        
+        # 2. Lokalni GGUF modely
+        for root, dirs, files in os.walk(Config.MODELY_DIR):
+            for file in files:
+                if file.endswith('.gguf') and 'mmproj' not in file.lower():
+                    cesta = os.path.join(root, file)
+                    nazev = os.path.basename(root)
+                    velikost = os.path.getsize(cesta) / (1024**3)
+                    dostupne.append({
+                        'id': f"lokalni_{nazev}",
+                        'nazev': f"{nazev} [{velikost:.2f} GB]",
+                        'typ': 'lokalni',
+                        'info': {'cesta': cesta, 'typ': 'gguf'}
+                    })
+        
+        # 3. Ollama modely (pokud bezi)
+        try:
+            r = requests.get('http://localhost:11434/api/tags', timeout=1)
+            if r.status_code == 200:
+                for model in r.json().get('models', []):
+                    nazev = model['name']
+                    dostupne.append({
+                        'id': f"ollama/{nazev}",
+                        'nazev': f"🦙 {nazev} (Ollama)",
+                        'typ': 'ollama'
+                    })
+        except Exception:
+            pass
+            
+        return dostupne
+
+    @staticmethod
+    def odpoved_gemini(prompt):
+        klic = Providers.nacti_klic("gemini")
+        if not klic: return "❌ Chybí Gemini klíč."
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=klic)
+            model = genai.GenerativeModel('gemini-2.0-flash')
+            return model.generate_content(prompt).text
+        except Exception as e:
+            return f"❌ Chyba Gemini: {str(e)}"
+
+    @staticmethod
+    def odpoved_deepseek(prompt):
+        klic = Providers.nacti_klic("deepseek")
+        if not klic: return "❌ Chybí DeepSeek klíč."
+        try:
+            r = requests.post('https://api.deepseek.com/v1/chat/completions',
+                headers={'Authorization': f'Bearer {klic}'},
+                json={'model': 'deepseek-chat', 'messages': [{'role': 'user', 'content': prompt}], 'max_tokens': 2048},
+                timeout=30)
+            return r.json()['choices'][0]['message']['content'] if r.status_code == 200 else f"❌ Chyba: {r.status_code}"
+        except Exception as e:
+            return f"❌ Chyba DeepSeek: {str(e)}"
+
+    @staticmethod
+    def odpoved_openai(prompt):
+        klic = Providers.nacti_klic("openai")
+        if not klic: return "❌ Chybí OpenAI klíč."
+        try:
+            from openai import OpenAI
+            client = OpenAI(api_key=klic)
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{'role': 'user', 'content': prompt}],
+                max_tokens=2048
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            return f"❌ Chyba OpenAI: {str(e)}"
+
+    @staticmethod
+    def odpoved_claude(prompt):
+        klic = Providers.nacti_klic("claude")
+        if not klic: return "❌ Chybí Claude klíč."
+        try:
+            r = requests.post('https://api.anthropic.com/v1/messages',
+                headers={'x-api-key': klic, 'anthropic-version': '2023-06-01'},
+                json={'model': 'claude-3-haiku-20240307', 'max_tokens': 2048, 'messages': [{'role': 'user', 'content': prompt}]},
+                timeout=30)
+            return r.json()['content'][0]['text'] if r.status_code == 200 else f"❌ Chyba: {r.status_code}"
+        except Exception as e:
+            return f"❌ Chyba Claude: {str(e)}"
+
+    @staticmethod
+    def odpoved_ollama(prompt, model_name):
+        try:
+            r = requests.post('http://localhost:11434/api/generate',
+                json={'model': model_name, 'prompt': prompt, 'stream': False},
+                timeout=120)
+            return r.json()['response'] if r.status_code == 200 else f"❌ Chyba Ollama: {r.status_code}"
+        except Exception as e:
+            return f"❌ Chyba Ollama: {str(e)}"
+
+    @staticmethod
+    def odpoved_gguf(prompt, cesta):
+        try:
+            from llama_cpp import Llama
+            llm = Llama(model_path=cesta, n_ctx=4096, n_threads=4, n_gpu_layers=0, verbose=False)
+            response = llm(prompt, max_tokens=2048, temperature=0.7, echo=False)
+            return response['choices'][0]['text']
+        except Exception as e:
+            return f"❌ Chyba GGUF: {str(e)}"
+
+    @staticmethod
+    def generuj(prompt, model_id, model_info=None):
+        if model_id == 'gemini': return Providers.odpoved_gemini(prompt)
+        if model_id == 'deepseek': return Providers.odpoved_deepseek(prompt)
+        if model_id == 'openai': return Providers.odpoved_openai(prompt)
+        if model_id == 'claude': return Providers.odpoved_claude(prompt)
+        
+        # Ollama routing
+        if model_id.startswith('ollama/'):
+            model_name = model_id.replace('ollama/', '')
+            return Providers.odpoved_ollama(prompt, model_name)
+            
+        if model_id.startswith('lokalni_') and model_info:
+            if model_info.get('typ') == 'gguf':
+                return Providers.odpoved_gguf(prompt, model_info.get('cesta'))
+                
+        return f"❌ Neznámý model: {model_id}"

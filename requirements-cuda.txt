@@ -1,0 +1,7 @@
+# Nainstaluj nejdříve requirements.txt, pak tento soubor.
+# Obsahuje CUDA verzi PyTorch a llama-cpp-python.
+# Vyžaduje nainstalované CUDA Toolkit od NVIDIA.
+torch==2.1.2
+# Pro CUDA akceleraci llama-cpp-python musíš nastavit CMAKE_ARGS:
+# set CMAKE_ARGS=-DGGML_CUDA=ON
+# pip install llama-cpp-python==0.2.56 --force-reinstall --no-cache-dir
