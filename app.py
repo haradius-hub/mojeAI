@@ -26,6 +26,10 @@ def create_app():
             if origin and (urlsplit(origin).scheme != 'http' or urlsplit(origin).netloc != request.host):
                 abort(403)
 
+    @app.errorhandler(413)
+    def pozadavek_prilis_velky(_error):
+        return {'status': 'error', 'zprava': 'Požadavek překračuje limit 10 MB.'}, 413
+
     # Inicializace složek při startu
     Config.init_dirs()
     
