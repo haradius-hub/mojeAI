@@ -46,5 +46,4 @@ if __name__ == '__main__':
     print("=" * 60)
     print("🌐 Otevři v prohlížeči: http://localhost:5000")
     print("=" * 60)
-    port = int(os.environ.get('MOJEAI_PORT', '5000'))
-    app.run(debug=False, host='127.0.0.1', port=port)
+    app.run(debug=False, host='127.0.0.1', port=5000)
