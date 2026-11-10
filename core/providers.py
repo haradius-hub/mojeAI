@@ -4,8 +4,12 @@ import requests
 from config import Config
 
 class Providers:
+    POVOLENI_POSKYTOVATELE = {'gemini', 'deepseek', 'openai', 'claude'}
+
     @staticmethod
     def nacti_klic(provider):
+        if provider not in Providers.POVOLENI_POSKYTOVATELE:
+            return None
         cesta = os.path.join(Config.API_KLICE_DIR, f"{provider}.txt")
         if os.path.exists(cesta):
             with open(cesta, "r", encoding="utf-8") as f:
@@ -14,6 +18,10 @@ class Providers:
 
     @staticmethod
     def uloz_klic(provider, klic):
+        if provider not in Providers.POVOLENI_POSKYTOVATELE:
+            raise ValueError('Nepovolený poskytovatel API.')
+        if not isinstance(klic, str) or not klic.strip() or len(klic) > 4096:
+            raise ValueError('Neplatný API klíč.')
         cesta = os.path.join(Config.API_KLICE_DIR, f"{provider}.txt")
         with open(cesta, "w", encoding="utf-8") as f:
             f.write(klic.strip())
@@ -23,11 +31,13 @@ class Providers:
     def dostupne_modely():
         dostupne = []
         # 1. Cloudove API
-        for soubor in os.listdir(Config.API_KLICE_DIR):
-            if soubor.endswith('.txt'):
-                provider = soubor.replace('.txt', '')
-                if Providers.nacti_klic(provider):
-                    dostupne.append({'id': provider, 'nazev': provider.capitalize(), 'typ': 'api'})
+        for provider in sorted(Providers.POVOLENI_POSKYTOVATELE):
+            dostupne.append({
+                'id': provider,
+                'nazev': provider.capitalize(),
+                'typ': 'api',
+                'ma_klic': bool(Providers.nacti_klic(provider))
+            })
         
         # 2. Lokalni GGUF modely
         for root, dirs, files in os.walk(Config.MODELY_DIR):
@@ -181,8 +191,14 @@ class Providers:
             model_name = model_id.replace('ollama/', '')
             return Providers.odpoved_ollama(prompt, model_name)
             
-        if model_id.startswith('lokalni_') and model_info:
-            if model_info.get('typ') == 'gguf':
-                return Providers.odpoved_gguf(prompt, model_info.get('cesta'))
+        if isinstance(model_id, str) and model_id.startswith('lokalni_'):
+            # Cestu modelu určuje výhradně server; klientské model_info se ignoruje.
+            for model in Providers.dostupne_modely():
+                if model.get('id') == model_id and model.get('typ') == 'lokalni':
+                    cesta = os.path.realpath(model.get('info', {}).get('cesta', ''))
+                    koren = os.path.realpath(Config.MODELY_DIR)
+                    if os.path.commonpath([koren, cesta]) == koren and os.path.isfile(cesta):
+                        return Providers.odpoved_gguf(prompt, cesta)
+            return '❌ Lokální model nebyl nalezen nebo není povolen.'
                 
         return f"❌ Neznámý model: {model_id}"
