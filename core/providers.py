@@ -208,7 +208,11 @@ class Providers:
                 if model.get('id') == model_id and model.get('typ') == 'lokalni':
                     cesta = os.path.realpath(model.get('info', {}).get('cesta', ''))
                     koren = os.path.realpath(Config.MODELY_DIR)
-                    if os.path.commonpath([koren, cesta]) == koren and os.path.isfile(cesta):
+                    try:
+                        je_povolena = os.path.commonpath([koren, cesta]) == koren
+                    except ValueError:
+                        je_povolena = False
+                    if je_povolena and os.path.isfile(cesta):
                         return Providers.odpoved_gguf(prompt, cesta)
             return '❌ Lokální model nebyl nalezen nebo není povolen.'
                 
