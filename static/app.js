@@ -36,7 +36,7 @@ async function nactiGpuInfo() {
         const checkbox = document.getElementById('gpuPovolen');
         
         if (data.dostupna) {
-            status.innerHTML = `✅ <span style="color:#238636;">${data.nazev}</span>`;
+            status.textContent = `✅ ${data.nazev}`;
             
             if (data.cuda) {
                 detail.innerHTML = '💡 NVIDIA GPU – akcelerace by měla fungovat.';
@@ -47,7 +47,7 @@ async function nactiGpuInfo() {
                 checkbox.checked = false;
             }
         } else {
-            status.innerHTML = `❌ <span style="color:#da3633;">Žádná GPU</span>`;
+            status.textContent = '❌ Žádná GPU';
             detail.innerHTML = 'Model poběží na CPU.';
             checkbox.disabled = true;
             checkbox.checked = false;
@@ -71,7 +71,7 @@ async function nactiKonfiguraci() {
         
         // Cloudové modely
         const apiModely = ['gemini', 'deepseek', 'openai', 'claude'];
-        const dostupneApi = apiModely.filter(m => data.dostupne_modele.some(d => d === m || d.id === m));
+        const dostupneApi = apiModely.filter(m => data.dostupne_modele.some(d => d.id === m));
         
         if (dostupneApi.length > 0) {
             const group = document.createElement('optgroup');
@@ -79,7 +79,8 @@ async function nactiKonfiguraci() {
             dostupneApi.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m;
-                opt.textContent = m.charAt(0).toUpperCase() + m.slice(1);
+                const zaznam = data.dostupne_modele.find(d => d.id === m);
+                opt.textContent = m.charAt(0).toUpperCase() + m.slice(1) + (zaznam?.ma_klic ? ' 🔑' : ' (chybí klíč)');
                 group.appendChild(opt);
                 if (!prvniModel) { prvniModel = opt.textContent; prvniModelValue = m; }
             });
@@ -94,7 +95,6 @@ async function nactiKonfiguraci() {
             lokalniModely.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m.id;
-                opt.dataset.modelInfo = JSON.stringify(m.info);
                 opt.textContent = m.nazev;
                 group.appendChild(opt);
                 if (!prvniModel) { prvniModel = opt.textContent; prvniModelValue = m.id; }
@@ -103,13 +103,18 @@ async function nactiKonfiguraci() {
         }
 
         // Ollama
-        const maOllama = data.dostupne_modele.some(d => d.id === 'ollama' || d === 'ollama');
-        if (maOllama) {
-            const opt = document.createElement('option');
-            opt.value = 'ollama';
-            opt.textContent = '🦙 Ollama (llama3.2)';
-            select.appendChild(opt);
-            if (!prvniModel) { prvniModel = opt.textContent; prvniModelValue = 'ollama'; }
+        const ollamaModely = data.dostupne_modele.filter(d => d.typ === 'ollama');
+        if (ollamaModely.length > 0) {
+            const group = document.createElement('optgroup');
+            group.label = '🦙 Ollama';
+            ollamaModely.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.nazev;
+                group.appendChild(opt);
+                if (!prvniModel) { prvniModel = opt.textContent; prvniModelValue = m.id; }
+            });
+            select.appendChild(group);
         }
 
         if (!prvniModel) {
@@ -323,11 +328,6 @@ async function poslatDotaz() {
     const select = document.getElementById('modelSelect');
     const model = select.value;
     const selectedOption = select.options[select.selectedIndex];
-    let modelInfo = null;
-    
-    if (selectedOption && selectedOption.dataset.modelInfo) {
-        try { modelInfo = JSON.parse(selectedOption.dataset.modelInfo); } catch(e) {}
-    }
     
     if (!model) { zobrazToast('❌ Není vybraný žádný model', true); return; }
     
@@ -340,7 +340,6 @@ async function poslatDotaz() {
     formData.append('dotaz', dotaz);
     formData.append('model', model);
     formData.append('force_search', force_search);
-    if (modelInfo) formData.append('lokalni_model_info', JSON.stringify(modelInfo));
     if (vybranySoubor) formData.append('file', vybranySoubor);
     
     vybranySoubor = null;
