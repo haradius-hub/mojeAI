@@ -119,8 +119,6 @@ def chat():
                     text_ze_souboru = f.read(100001)
                 if len(text_ze_souboru) > 100000:
                     return jsonify({'odpoved': 'Textový obsah souboru překračuje limit 100 000 znaků.'}), 413
-            else:
-                text_ze_souboru = f"[Soubor {nahrany_soubor.filename} byl nahrán, ale textovou extrakci pro tento formát zatím neumím.]"
         except Exception as e:
             text_ze_souboru = f"[Chyba při čtení souboru: {e}]"
         finally:
