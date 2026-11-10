@@ -105,12 +105,20 @@ def chat():
             if pripona == '.pdf':
                 from pypdf import PdfReader
                 reader = PdfReader(cesta)
-                text_ze_souboru = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+                casti = []
+                zbyva = 100000
+                for page in reader.pages[:300]:
+                    cast = page.extract_text() or ''
+                    casti.append(cast[:zbyva])
+                    zbyva -= len(casti[-1])
+                    if zbyva <= 0:
+                        break
+                text_ze_souboru = "\n".join(casti)
             else:
                 with open(cesta, 'r', encoding='utf-8') as f:
-                    text_ze_souboru = f.read(5 * 1024 * 1024 + 1)
-                if len(text_ze_souboru) > 5 * 1024 * 1024:
-                    return jsonify({'odpoved': 'Textový soubor je větší než limit 5 MB.'}), 413
+                    text_ze_souboru = f.read(100001)
+                if len(text_ze_souboru) > 100000:
+                    return jsonify({'odpoved': 'Textový obsah souboru překračuje limit 100 000 znaků.'}), 413
             else:
                 text_ze_souboru = f"[Soubor {nahrany_soubor.filename} byl nahrán, ale textovou extrakci pro tento formát zatím neumím.]"
         except Exception as e:
