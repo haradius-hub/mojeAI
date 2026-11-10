@@ -11,9 +11,13 @@ config_bp = Blueprint('config', __name__)
 
 @config_bp.route('/api/config', methods=['GET'])
 def get_config():
+    modely = Providers.dostupne_modely()
+    # Interní cesty k souborům modelů nikdy neposíláme do prohlížeče.
+    for model in modely:
+        model.pop('info', None)
     return jsonify({
         'config': Config.nacti(),
-        'dostupne_modele': Providers.dostupne_modely()
+        'dostupne_modele': modely
     })
 
 @config_bp.route('/api/config', methods=['POST'])
