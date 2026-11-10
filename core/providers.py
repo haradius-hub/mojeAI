@@ -23,8 +23,19 @@ class Providers:
         if not isinstance(klic, str) or not klic.strip() or len(klic) > 4096:
             raise ValueError('Neplatný API klíč.')
         cesta = os.path.join(Config.API_KLICE_DIR, f"{provider}.txt")
-        with open(cesta, "w", encoding="utf-8") as f:
-            f.write(klic.strip())
+        docasna = cesta + '.tmp'
+        fd = os.open(docasna, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        try:
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                f.write(klic.strip())
+            os.replace(docasna, cesta)
+            try:
+                os.chmod(cesta, 0o600)
+            except OSError:
+                pass
+        finally:
+            if os.path.exists(docasna):
+                os.remove(docasna)
         return True
 
     @staticmethod
