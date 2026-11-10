@@ -18,30 +18,62 @@ def get_config():
 
 @config_bp.route('/api/config', methods=['POST'])
 def set_config():
-    data = request.json
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({'status': 'error', 'zprava': 'Očekávána JSON data.'}), 400
+
     config = Config.nacti()
+    povolene = {
+        'internet': bool, 'smart_search': bool, 'pouzit_gpu': bool,
+        'max_vzpominek': int, 'gpu_vrstev': int, 'n_ctx': int,
+        'n_threads': int, 'vychozi_model': str,
+    }
+    limity = {
+        'max_vzpominek': (0, 30), 'gpu_vrstev': (0, 200),
+        'n_ctx': (512, 32768), 'n_threads': (1, 64),
+    }
     for key, value in data.items():
-        if key in config:
-            config[key] = value
+        if key not in povolene:
+            continue
+        expected = povolene[key]
+        if expected is int:
+            if isinstance(value, bool) or not isinstance(value, int):
+                return jsonify({'status': 'error', 'zprava': f'Neplatná hodnota: {key}'}), 400
+            low, high = limity[key]
+            if not low <= value <= high:
+                return jsonify({'status': 'error', 'zprava': f'Hodnota {key} je mimo povolený rozsah.'}), 400
+        elif not isinstance(value, expected):
+            return jsonify({'status': 'error', 'zprava': f'Neplatná hodnota: {key}'}), 400
+        config[key] = value
     Config.uloz(config)
     return jsonify({'status': 'ok', 'config': config})
 
 @config_bp.route('/api/config/keys', methods=['POST'])
 def uloz_klic():
-    data = request.json
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({'status': 'error', 'zprava': 'Očekávána JSON data.'}), 400
     provider = data.get('provider')
     klic = data.get('key')
     if not provider or not klic:
         return jsonify({'status': 'error', 'zprava': 'Chybí provider nebo klíč'})
     
-    Providers.uloz_klic(provider, klic)
+    try:
+        Providers.uloz_klic(provider, klic)
+    except ValueError as e:
+        return jsonify({'status': 'error', 'zprava': str(e)}), 400
     return jsonify({'status': 'ok'})
 
 @config_bp.route('/api/prompt', methods=['POST'])
 def nastav_prompt():
-    data = request.json
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({'status': 'error', 'zprava': 'Očekávána JSON data.'}), 400
+    prompt = data.get('prompt')
+    if not isinstance(prompt, str) or not prompt.strip() or len(prompt) > 12000:
+        return jsonify({'status': 'error', 'zprava': 'Prompt musí mít 1 až 12 000 znaků.'}), 400
     config = Config.nacti()
-    config['system_prompt'] = data.get('prompt', config['system_prompt'])
+    config['system_prompt'] = prompt
     Config.uloz(config)
     return jsonify({'status': 'ok'})
 
