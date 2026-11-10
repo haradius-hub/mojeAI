@@ -5,4 +5,4 @@ requests==2.31.0
 google-generativeai==0.3.2
 openai==1.10.0
 huggingface-hub==0.20.3
-ddgs
+ddgspypdf>=4.2,<6
