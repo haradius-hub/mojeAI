@@ -7,6 +7,7 @@ from datetime import datetime
 import requests
 import os
 import tempfile
+from werkzeug.utils import secure_filename
 import json
 from ddgs import DDGS
 
@@ -70,33 +71,46 @@ def chat():
         dotaz = request.form.get('dotaz', '')
         model_id = request.form.get('model', 'gemini')
         force_search = request.form.get('force_search') == 'true'
-        model_info_str = request.form.get('lokalni_model_info')
-        model_info = json.loads(model_info_str) if model_info_str else None
+        model_info = None  # Cesta modelu se nikdy nepřebírá od klienta.
         nahrany_soubor = request.files.get('file')
     else:
-        data = request.json
+        data = request.get_json(silent=True) or {}
+        if not isinstance(data, dict):
+            return jsonify({'odpoved': 'Neplatný formát požadavku.'}), 400
         dotaz = data.get('dotaz', '')
         model_id = data.get('model', 'gemini')
         force_search = data.get('force_search', False)
-        model_info = data.get('lokalni_model_info')
+        model_info = None  # Cesta modelu se nikdy nepřebírá od klienta.
         nahrany_soubor = None
 
+    if not isinstance(dotaz, str) or len(dotaz) > 20000:
+        return jsonify({'odpoved': 'Dotaz musí být text do 20 000 znaků.'}), 400
+    if not isinstance(model_id, str) or len(model_id) > 200:
+        return jsonify({'odpoved': 'Neplatný identifikátor modelu.'}), 400
     if not dotaz and not nahrany_soubor:
         return jsonify({'odpoved': 'Prosim napis otazku nebo nahraj soubor.'})
 
     text_ze_souboru = ""
     if nahrany_soubor:
-        temp_dir = tempfile.gettempdir()
-        cesta = os.path.join(temp_dir, nahrany_soubor.filename)
-        nahrany_soubor.save(cesta)
+        puvodni_nazev = secure_filename(nahrany_soubor.filename or '')
+        pripona = os.path.splitext(puvodni_nazev)[1].lower()
+        povolene_pripony = {'.pdf', '.txt', '.md', '.py', '.csv'}
+        if pripona not in povolene_pripony:
+            return jsonify({'odpoved': 'Nepodporovaný typ souboru.'}), 400
+        temp_file = tempfile.NamedTemporaryFile(prefix='mojeai_', suffix=pripona, delete=False)
+        cesta = temp_file.name
+        temp_file.close()
         try:
-            if cesta.lower().endswith('.pdf'):
+            nahrany_soubor.save(cesta)
+            if pripona == '.pdf':
                 from pypdf import PdfReader
                 reader = PdfReader(cesta)
                 text_ze_souboru = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
-            elif cesta.lower().endswith(('.txt', '.md', '.py', '.csv')):
+            else:
                 with open(cesta, 'r', encoding='utf-8') as f:
-                    text_ze_souboru = f.read()
+                    text_ze_souboru = f.read(5 * 1024 * 1024 + 1)
+                if len(text_ze_souboru) > 5 * 1024 * 1024:
+                    return jsonify({'odpoved': 'Textový soubor je větší než limit 5 MB.'}), 413
             else:
                 text_ze_souboru = f"[Soubor {nahrany_soubor.filename} byl nahrán, ale textovou extrakci pro tento formát zatím neumím.]"
         except Exception as e:
@@ -132,7 +146,7 @@ OTAZKA: {dotaz}
 ODPOVED:"""
     
     memory_manager.uloz(f"Otazka: {dotaz}", zdroj="dotaz")
-    odpoved = Providers.generuj(prompt, model_id, model_info)
+    odpoved = Providers.generuj(prompt, model_id)
     memory_manager.uloz(f"Odpoved: {odpoved}", zdroj="odpoved")
     
     return jsonify({'odpoved': odpoved})
