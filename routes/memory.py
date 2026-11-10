@@ -28,8 +28,11 @@ def pridat_slozku():
     data = request.get_json(silent=True)
     if not isinstance(data, dict) or not isinstance(data.get('cesta'), str):
         return jsonify({'status': 'error', 'zprava': 'Neplatná cesta ke složce.'}), 400
-    cesta = os.path.realpath(data['cesta'].strip())
-    if not cesta or not os.path.isdir(cesta):
+    vstupni_cesta = data['cesta'].strip()
+    if not vstupni_cesta:
+        return jsonify({'status': 'error', 'zprava': 'Zadej cestu ke složce.'}), 400
+    cesta = os.path.realpath(vstupni_cesta)
+    if not os.path.isdir(cesta):
         return jsonify({'status': 'error', 'zprava': 'Složka neexistuje nebo nejde o adresář.'}), 400
     
     config = Config.nacti()
@@ -45,10 +48,14 @@ def odebrat_slozku():
     data = request.get_json(silent=True)
     if not isinstance(data, dict) or not isinstance(data.get('cesta'), str):
         return jsonify({'status': 'error', 'zprava': 'Neplatná cesta ke složce.'}), 400
-    cesta = os.path.realpath(data['cesta'].strip())
+    vstupni_cesta = data['cesta'].strip()
+    if not vstupni_cesta:
+        return jsonify({'status': 'error', 'zprava': 'Zadej cestu ke složce.'}), 400
+    cesta = os.path.realpath(vstupni_cesta)
     config = Config.nacti()
-    if cesta in config['pristupne_slozky']:
-        config['pristupne_slozky'].remove(cesta)
-        Config.uloz(config)
-        return jsonify({'status': 'ok'})
+    for ulozena_cesta in (vstupni_cesta, cesta):
+        if ulozena_cesta in config['pristupne_slozky']:
+            config['pristupne_slozky'].remove(ulozena_cesta)
+            Config.uloz(config)
+            return jsonify({'status': 'ok'})
     return jsonify({'status': 'error', 'zprava': 'Nenalezeno'})
