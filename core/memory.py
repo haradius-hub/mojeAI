@@ -5,7 +5,6 @@ import hashlib
 import json
 import math
 from datetime import datetime
-from llama_cpp import Llama
 from config import Config
 
 class MemoryManager:
@@ -34,6 +33,7 @@ class MemoryManager:
         if self.llm is None:
             if not os.path.exists(self.model_path):
                 raise FileNotFoundError(f"Chybi model: {self.model_path}. Spust 'python stahni_model.py'")
+            from llama_cpp import Llama
             self.llm = Llama(
                 model_path=self.model_path,
                 embedding=True,
