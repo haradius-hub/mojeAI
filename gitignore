@@ -1,0 +1,69 @@
+# ============================================================
+#  MojeAI - .gitignore
+# ============================================================
+
+# ---- Modely a binárky ----
+modely/
+*.gguf
+*.ggml
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.onnx
+
+# ---- Portable prohlížeče ----
+www/*/
+!www/README.md
+
+# ---- Embedded Python (velké, platform-specifické) ----
+python/
+get-pip.py
+
+# ---- Runtime data ----
+data/
+pamet/
+*.db
+*.sqlite
+
+# ---- Osobní konfigurace ----
+config.json
+
+# ---- API klíče ----
+api_klic/*.txt
+!api_klic/*.example.txt
+
+# ---- Staré/dočasné soubory ----
+*.py-OLD
+*.batOLD
+*.batOLD*
+*-OLD
+*-OLD1
+Výsledná struktura*.txt
+Návrh struktury*.txt
+server.log
+*.log
+
+# ---- Testovací složky ----
+pristupne_slozky/
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---- IDE ----
+.vscode/
+.idea/
+*.swp
+*~

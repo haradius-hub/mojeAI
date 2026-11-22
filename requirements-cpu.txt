@@ -1,0 +1,5 @@
+# Nainstaluj nejdříve requirements.txt, pak tento soubor.
+# Obsahuje CPU verzi PyTorch (ušetří ~2 GB místa oproti CUDA verzi).
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.1.2+cpu
+llama-cpp-python==0.2.56
