@@ -1,0 +1,80 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; height: 100vh; display: flex; }
+.sidebar { width: 360px; background: #161b22; padding: 16px; border-right: 1px solid #30363d; overflow-y: auto; flex-shrink: 0; }
+.sidebar h2 { color: #58a6ff; font-size: 16px; margin-bottom: 12px; }
+.sidebar label { display: block; margin: 8px 0 4px; color: #8b949e; font-size: 12px; font-weight: 600; }
+.sidebar select, .sidebar input, .sidebar textarea { width: 100%; padding: 6px 10px; background: #0d1117; border: 1px solid #30363d; color: #e6edf3; border-radius: 6px; font-size: 13px; }
+.sidebar select { cursor: pointer; }
+.sidebar select optgroup { background: #161b22; color: #e6edf3; }
+.sidebar select option { background: #0d1117; padding: 4px; }
+.sidebar textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+.sidebar button { width: 100%; padding: 8px; margin-top: 8px; background: #238636; border: none; color: white; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; }
+.sidebar button:hover { background: #2ea043; }
+.sidebar button.danger { background: #da3633; }
+.sidebar button.danger:hover { background: #f85149; }
+.sidebar button.secondary { background: #1f6feb; }
+.sidebar button.secondary:hover { background: #388bfd; }
+.sidebar .section { margin-top: 14px; padding-top: 14px; border-top: 1px solid #21262d; }
+.memory-box { background: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid #30363d; max-height: 150px; overflow-y: auto; margin-top: 6px; }
+.memory-item { font-size: 11px; color: #8b949e; border-bottom: 1px solid #21262d; padding: 4px 0; }
+.memory-item .label { color: #58a6ff; font-weight: 600; }
+.chat { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.chat-header { padding: 10px 20px; border-bottom: 1px solid #30363d; background: #161b22; display: flex; justify-content: space-between; align-items: center; }
+.chat-header h1 { font-size: 18px; color: #f0f6fc; }
+.chat-header .status-badge { font-size: 12px; color: #8b949e; }
+.chat-messages { flex: 1; padding: 16px 20px; overflow-y: auto; }
+.message { margin-bottom: 12px; max-width: 80%; padding: 10px 14px; border-radius: 12px; word-wrap: break-word; font-size: 14px; line-height: 1.5; }
+.message.user { background: #238636; color: white; margin-left: auto; }
+.message.assistant { background: #21262d; color: #e6edf3; margin-right: auto; border: 1px solid #30363d; }
+.message .time { font-size: 10px; color: #8b949e; margin-top: 4px; display: block; }
+.chat-input { padding: 10px 20px; border-top: 1px solid #30363d; background: #161b22; display: flex; gap: 10px; }
+.chat-input textarea { flex: 1; padding: 8px 12px; background: #0d1117; border: 1px solid #30363d; color: #e6edf3; border-radius: 8px; resize: none; font-family: inherit; font-size: 14px; }
+.chat-input textarea:focus { outline: none; border-color: #58a6ff; }
+.chat-input button { padding: 8px 20px; background: #1f6feb; border: none; color: white; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; }
+.chat-input button:hover { background: #388bfd; }
+.footer { font-size: 11px; color: #8b949e; padding: 5px 20px; background: #0d1117; border-top: 1px solid #30363d; display: flex; justify-content: space-between; }
+.footer .model-info { color: #58a6ff; }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0d1117; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+.toast { position: fixed; bottom: 20px; right: 20px; background: #238636; color: white; padding: 12px 20px; border-radius: 8px; z-index: 1000; opacity: 0; transition: opacity 0.3s; max-width: 400px; }
+.toast.error { background: #da3633; }
+.toast.show { opacity: 1; }
+.slozka-polozka { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #21262d; font-size: 12px; }
+.slozka-polozka .cesta { color: #e6edf3; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slozka-polozka .pocet { color: #8b949e; margin-left: 8px; }
+.slozka-polozka .smazat { color: #da3633; cursor: pointer; margin-left: 8px; }
+.slozka-polozka .smazat:hover { color: #f85149; }
+.gpu-info { font-size: 11px; color: #8b949e; margin-top: 4px; }
+.flex-row { display: flex; gap: 6px; }
+.flex-row input { flex: 1; }
+
+/* Skryti sidebaru */
+.sidebar {
+    transition: margin-left 0.3s ease;
+}
+.sidebar.hidden {
+    margin-left: -360px;
+}
+/* Nove tlacitko v hlavicce */
+.toggle-btn-inline {
+    background: transparent;
+    border: none;
+    color: #58a6ff;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 10px 0 0;
+    margin-right: 10px;
+    transition: color 0.2s;
+}
+.toggle-btn-inline:hover {
+    color: #388bfd;
+}
+
+.thinking {
+    color: #d29922;
+    font-style: italic;
+    font-size: 0.95em;
+    opacity: 0.9;
+}
