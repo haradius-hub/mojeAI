@@ -1,26 +1,25 @@
-# Portable prohlížeče
+# Portable prohlizece
 
-Sem umísti portable verze prohlížečů. Launcher (`spustit_cpu.bat`,
-`spustit_gpu.bat`, `spustit_en.bat`) je detekuje automaticky podle
-`*.exe` v každé podsložce.
+Do podslozek teto slozky lze umistit portable verze prohlizecu. Pouziti je volitelne.
 
-## Očekávané složky
+Aktualne je automaticky nabizi pouze Windows launcher `spustit_cpu.bat` (systemovy Python). Portable rezim spousteny pres `run.py` otevre vychozi systemovy prohlizec. GPU launcher je vypnuty a historicky `spustit_en.bat` neni doporucenou cestou.
+
+## Ocekavane slozky
 
 - `ChromiumPortable/ChromiumPortable.exe`
 - `IronPortable/IronPortable.exe`
 - `LibreWolfPortable/LibreWolfPortable.exe`
 - `OperaPortable/OperaPortable.exe`
 
-Stačí mít jen ty, které reálně používáš - launcher se přizpůsobí.
+Nazvy podslozek a spustitelnych souboru se mohou podle konkretni distribuce lisit. Launcher prohledava podslozky `www/` a nabidne nalezene soubory `*.exe`.
 
-## Kde stáhnout
+## Kde hledat
 
 - Chromium Portable: <https://portableapps.com/apps/internet/chromium_portable>
 - Iron Portable: <https://portableapps.com/apps/internet/iron_portable>
-- LibreWolf Portable: <https://librewolf.net/>
+- LibreWolf: <https://librewolf.net/>
 - Opera Portable: <https://portableapps.com/apps/internet/opera_portable>
 
-## Proč nejsou v gitu
+## Proc nejsou v Gitu
 
-Portable prohlížeče mají stovky MB. V `.gitignore` je `www/*/`,
-takže se necommitují. Tento README zůstává, aby složka v gitu existovala.
+Portable prohlizece mohou zabirat stovky MB. V `.gitignore` je proto nastavena vyjimka `www/*/`; tento README zustava verzovany, aby slozku popsal.
