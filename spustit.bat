@@ -1,26 +1,44 @@
 @echo off
-title MojeAI - Přenosný AI asistent
+setlocal
+cd /d "%~dp0"
+title MojeAI - Spusteni
 
 echo.
 echo ============================================================
-echo    MOJEAI - Přenosný AI asistent
+echo    MOJEAI - SPUSTENI
 echo ============================================================
 echo.
-echo   1. CPU verze (rychla instalace, bez GPU)
-echo   2. GPU verze (detekce GPU + instalace)
+echo   1. Portable Python (doporuceno)
+echo   2. Systemovy Python (CPU)
+echo   3. Konec
 echo.
+echo GPU instalace zatim neni podporovana.
 echo ============================================================
 echo.
 
 set "volba="
-set /p "volba=Vyber (1/2) nebo Enter pro CPU: "
+set /p "volba=Vyber (1-3), Enter = portable: "
+if "%volba%"=="" set "volba=1"
 
-if "%volba%"=="2" (
-    echo Spoustim GPU verzi...
-    start "" "spustit_gpu.bat"
-) else (
-    echo Spoustim CPU verzi...
-    start "" "spustit_cpu.bat"
+if "%volba%"=="1" goto :portable
+if "%volba%"=="2" goto :system
+if "%volba%"=="3" exit /b 0
+
+echo Neplatna volba.
+pause
+exit /b 1
+
+:portable
+call setup_portable.bat
+if errorlevel 1 exit /b 1
+if not exist "python\python.exe" (
+    echo [CHYBA] Portable Python nebyl nalezen.
+    pause
+    exit /b 1
 )
+"python\python.exe" run.py
+exit /b %errorlevel%
 
-exit /b 0
+:system
+call spustit_cpu.bat
+exit /b %errorlevel%
