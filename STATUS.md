@@ -1,6 +1,6 @@
 # MojeAI – aktuální stav projektu
 
-Tento dokument popisuje stav ověřený kontrolou zdrojového kódu v pracovní větvi `cleanup/repository-audit`. Nejde o potvrzení, že aplikace byla v tomto kroku spuštěna nebo otestována.
+Tento dokument popisuje stav zjištěný kontrolou zdrojového kódu v pracovní větvi `cleanup/repository-audit`. Úpravy spouštěcích skriptů a dokumentace byly zapsány, ale jejich běh na Windows ani Linuxu zatím nebyl prakticky otestován.
 
 ## Vize
 
@@ -8,42 +8,38 @@ MojeAI má být přenositelná aplikační a orchestrace vrstva pro různé mode
 
 Dlouhodobým cílem je osobní AI pracovní prostředí s historií, dlouhodobou a projektovou pamětí, skutečným tool calling a bezpečnou prací se soubory. Současný kód představuje pouze základ této vize.
 
-## Co je v aktuálním kódu implementováno
+## Implementované části
 
-### Aplikace a rozhraní
-- Flask aplikace má modulární strukturu: `app.py`, `config.py`, `core/`, `routes/`, `static/` a `templates/`.
-- Webové rozhraní nabízí chat, výběr dostupného modelu, nastavení systémového promptu, API klíčů, internetu a parametrů lokálního modelu.
-- Odpovědi se zobrazují po dokončení požadavku; streaming není implementován.
-- Frontend vykresluje Markdown pomocí knihovny Marked načítané z CDN.
+### Aplikace a modely
+- Modulární Flask aplikace: `app.py`, `config.py`, `core/`, `routes/`, `static/` a `templates/`.
+- Chatovací rozhraní a nastavení systémového promptu, modelu, API klíčů, internetu a parametrů lokálního modelu.
+- Poskytovatelé Gemini, DeepSeek, OpenAI a Claude.
+- Lokální GGUF modely přes `llama-cpp-python`.
+- Připojení k lokálnímu API Ollamy a načtení seznamu modelů.
+- Základní internetové vyhledávání a získání počasí.
+- Přijetí PDF, TXT, MD, PY a CSV do konkrétního chatového požadavku.
 
-### Modely a poskytovatelé
-- Implementováni jsou poskytovatelé Gemini, DeepSeek, OpenAI a Claude.
-- Kód umí vyhledat lokální GGUF soubory a předat je do `llama-cpp-python`.
-- Kód umí načíst seznam modelů z lokálního API Ollamy a odeslat jí požadavek.
-- GPU informace se zjišťují orientačně. Samotná detekce GPU nezajišťuje funkční akceleraci.
-
-### Paměť
-- `core/memory.py` používá SQLite databázi `data/pamet.db`.
-- Textové záznamy se ukládají také jako soubory do `pamet/`.
-- Sémantické vyhledávání počítá embeddingy přes `llama-cpp-python` a model `nomic-embed-text-v1.5.Q8_0.gguf`.
-- Paměť není totéž co historie konverzací. Kompletní seznam chatů, jejich opětovné otevírání a vyhledávání v historii implementovány nejsou.
-
-### Projekty
-- `core/projects.py` a `routes/projects.py` implementují databázovou evidenci projektů, popisů, instrukcí a povolených složek s oprávněním read/read_write.
-- Jde o backendové API a evidenci oprávnění. Projekty zatím nejsou propojeny s chatovacím rozhraním ani s oddělenými paměťmi.
-- Připojení složky samo o sobě nezpřístupňuje její obsah modelu.
-
-### Internet a soubory
-- Chatový endpoint obsahuje základní vyhledávání přes DuckDuckGo a zvláštní větev pro počasí přes Open-Meteo.
-- Uživatel může v chatu vynutit hledání prefixem `//`.
-- Endpoint přijímá PDF, TXT, MD, PY a CSV; obsah je vložen do konkrétního požadavku. Nejde o trvalou knihovnu dokumentů.
+### Paměť a projekty
+- Dlouhodobá paměť používá SQLite databázi `data/pamet.db` a textové záznamy ve složce `pamet/`.
+- Sémantické vyhledávání vyžaduje `llama-cpp-python` a model `nomic-embed-text-v1.5.Q8_0.gguf`.
+- Backend eviduje projekty, popisy, instrukce a povolené složky. Projekty zatím nejsou propojené s chatem ani oddělenou pamětí.
 
 ### Provoz a bezpečnost
-- `setup_portable.bat` připravuje Embedded Python 3.12.3 a instaluje základní závislosti včetně CPU varianty `llama-cpp-python`.
-- `run.py` spouští aplikaci přes `python/python.exe`.
-- `spustit.sh` a `spustit_cpu.bat` používají systémový Python.
-- Flask server naslouchá na `127.0.0.1:5000`; aplikace odmítá požadavky s jiným Host a kontroluje Origin u změnových požadavků. Přihlášení implementováno není.
+- Windows portable: Embedded Python 3.12.3, `setup_portable.bat` a `run.py`.
+- Windows systémový Python: `spustit_cpu.bat`.
+- Linux: `spustit.sh` vytváří a používá lokální `.venv`.
+- Server naslouchá na `127.0.0.1:5000`; aplikace kontroluje lokální Host a Origin u změnových požadavků.
 - API klíče se ukládají do lokálních souborů `api_klic/*.txt`, které ignoruje Git.
+
+## Stav spouštěcích cest po úpravě
+
+- `spustit.bat` nabízí portable Python (doporučený) a systémový Python (CPU).
+- `setup_portable.bat` kontroluje chyby stahování a instalace základních závislostí; instalace `llama-cpp-python` je doplňková a při selhání vypíše upozornění.
+- `spustit_cpu.bat` používá `python -m pip`, ověřuje instalaci závislostí a spouští server z adresáře projektu.
+- `spustit_gpu.bat` je záměrně vypnutý, protože původní detekce GPU a instalace neodpovídaly aktuálnímu kódu.
+- `spustit.sh` používá virtuální prostředí, aby se vyhnul instalaci balíčků do systémového Pythonu (např. Debian/Ubuntu s PEP 668).
+
+Tyto body popisují obsah skriptů, nikoli potvrzené úspěšné spuštění na cílových operačních systémech.
 
 ## Co není implementováno
 
@@ -53,27 +49,20 @@ Dlouhodobým cílem je osobní AI pracovní prostředí s historií, dlouhodobou
 - Bezpečné zápisy souborů, potvrzování uživatelem a automatické zálohy před změnou.
 - Projektově oddělený kontext a paměť.
 - Uživatelské rozhraní pro správu projektů.
-- Plnohodnotné řízení oprávnění a přihlašování pro více uživatelů.
-- Ověřená a jednotná instalace GPU variant pro Windows/Linux.
+- Přihlášení a řízení oprávnění pro více uživatelů.
+- Ověřená GPU instalace a akcelerace.
 
-## Známé technické nedostatky k prověření
+## Další technické úkoly
 
-1. `spustit_gpu.bat` instaluje zastaralé balíčky včetně ChromaDB, Torch a Transformers, přestože aktuální kód používá jinou architekturu. Nelze jej považovat za podporovanou instalační cestu.
-2. `requirements.txt` neobsahuje `llama-cpp-python`. Portable instalační skript jej přidává zvlášť; systémová instalace jej musí doplnit ručně, pokud má fungovat GGUF a sémantická paměť.
-3. Linuxový launcher instaluje pouze `requirements.txt`; neinstaluje `llama-cpp-python` ani embedding model.
-4. Soubory `api_klic/*.txt.example` jsou prázdné; návod je proto veden v `api_klic/README.md`.
-5. Je třeba prověřit chování paměti při chybějícím embedding modelu a při souběžných požadavcích.
-6. Automatické testy a reprodukovatelný testovací postup zatím nejsou v repozitáři doloženy.
-
-## Doporučené pořadí další práce
-
-1. Dokončit dokumentaci a sjednotit popis instalačních cest.
-2. Opravit a ověřit Windows CPU/portable/GPU spouštění; GPU režim nepovažovat za funkční, dokud nebude skutečně otestován.
-3. Prověřit ukládání a vyhledávání paměti včetně chybových stavů.
-4. Připravit minimální automatické testy backendu a bezpečnostních omezení.
-5. Teprve poté pokračovat v návrhu historie konverzací, projektového kontextu a tool calling.
-6. Historické soubory odstraňovat až po porovnání a archivaci.
+1. Otestovat portable instalaci na čistém Windows.
+2. Otestovat systémovou Python variantu Windows.
+3. Otestovat Linuxový launcher na Debianu/Ubuntu včetně vytvoření `.venv`.
+4. Ověřit instalaci a použití `llama-cpp-python` a embedding modelu.
+5. Prověřit chování paměti při chybějícím modelu a při souběžných požadavcích.
+6. Přidat automatické testy backendu a bezpečnostních omezení.
+7. Teprve poté pokračovat v historii konverzací, projektovém kontextu a tool calling.
+8. Historické soubory odstraňovat až po porovnání a archivaci.
 
 ## Poznámka k ověření
 
-Tento status vychází z kontroly zdrojových souborů. V rámci dokumentační etapy nebyla aplikace spuštěna, nebyla ověřena instalace závislostí ani nebyly provedeny runtime testy.
+V této etapě byly upraveny texty spouštěcích skriptů a dokumentace na pracovní větvi. Nebyl spuštěn Windows batch soubor, Linuxový shell skript ani samotná aplikace. Nebyla ověřena instalace balíčků, funkčnost modelů ani runtime chování.
