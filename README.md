@@ -13,7 +13,7 @@ Projekt je ve vývoji. Níže je popsáno, co současná verze skutečně nabíz
 3. Vyber možnost **1 – Portable Python**.
 4. Po dokončení instalace se spustí aplikace a otevře prohlížeč.
 
-Portable instalace stáhne Embedded Python 3.12.3 a připraví prostředí přímo ve složce projektu. Nainstaluje základní knihovny a pokusí se přidat také CPU verzi `llama-cpp-python`. Pokud se tato doplňková instalace nepodaří, cloudové modely mohou fungovat dál, ale lokální GGUF modely a sémantická paměť nebudou dostupné.
+Portable režim používá Embedded Python 3.12.3 ve složce projektu. Pokud v ní Python chybí, instalační skript jej stáhne; jinak připraví a doplní již přítomné prostředí. Nainstaluje základní knihovny a pokusí se přidat také CPU verzi `llama-cpp-python`. Pokud se tato doplňková instalace nepodaří, cloudové modely mohou fungovat dál, ale lokální GGUF modely a sémantická paměť nebudou dostupné.
 
 Případně lze kroky provést ručně:
 
