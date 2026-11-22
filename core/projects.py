@@ -156,6 +156,8 @@ class ProjectManager:
         canonical = os.path.realpath(os.path.abspath(os.path.expanduser(path.strip())))
         if not os.path.isdir(canonical):
             raise ProjectError("Složka neexistuje nebo nejde o adresář.")
+        if os.path.dirname(canonical) == canonical:
+            raise ProjectError("Kořen disku nebo souborového systému nelze připojit jako projektovou složku.")
         with self._connect() as db:
             existing = db.execute(
                 "SELECT path FROM project_folders WHERE project_id = ?", (project_id,)
@@ -200,6 +202,8 @@ class ProjectManager:
             ).fetchall()
         for folder in folders:
             root = os.path.realpath(folder["path"])
+            if not os.path.isdir(root):
+                continue
             try:
                 inside = os.path.commonpath([root, target]) == root
             except ValueError:
