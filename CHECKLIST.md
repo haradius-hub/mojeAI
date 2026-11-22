@@ -1,33 +1,33 @@
 # MojeAI – projektový checklist
 
-Checklist rozlišuje existující části kódu od funkcí, které jsou teprve plánované. Zaškrtnutí znamená, že odpovídající implementace je ve zdrojovém stromu; samo o sobě nepotvrzuje úspěšný runtime test.
+Checklist rozlišuje existující implementaci od plánovaných funkcí. Zaškrtnutí znamená, že odpovídající kód je přítomen; samo o sobě nepotvrzuje úspěšný runtime test.
 
 ## Aktuální základ
 
-- [x] Modulární Flask aplikace (`app.py`, `config.py`, `core/`, `routes/`).
-- [x] Webové chatovací rozhraní.
+- [x] Modulární Flask aplikace a webové chatovací rozhraní.
 - [x] Cloudové providery Gemini, DeepSeek, OpenAI a Claude.
 - [x] Detekce lokálních GGUF souborů a jejich obsluha přes `llama-cpp-python`.
 - [x] Volitelné napojení na lokální API Ollamy.
-- [x] SQLite databáze dlouhodobé paměti a textové záznamy v `pamet/`.
+- [x] SQLite databáze dlouhodobé paměti a textové záznamy.
 - [x] Sémantické vyhledávání paměti přes embedding model a `llama-cpp-python`.
 - [x] Základní internetové vyhledávání a získání počasí.
 - [x] Nahrávání PDF, TXT, MD, PY a CSV v rámci chatového požadavku.
 - [x] Ukládání API klíčů do lokálních souborů.
 - [x] Základní databázová evidence projektů a povolených složek přes API.
 - [x] Omezení Flask serveru na lokální Host a kontrola Origin u změnových požadavků.
-- [x] Portable instalační skript pro Embedded Python ve Windows.
 
-## Provozní cesty
+## Spouštění a instalace – skripty upraveny, čekají na test
 
-- [x] Portable Windows: `setup_portable.bat` + `python\python.exe run.py`.
-- [x] Windows systémový Python: `spustit_cpu.bat`.
-- [x] Linux systémový Python: `spustit.sh`.
-- [ ] Sjednotit a ověřit instalační postupy pro všechny podporované platformy.
-- [ ] Opravit nebo nahradit historický `spustit_gpu.bat`.
-- [ ] Ověřit instalaci portable prostředí na čistém Windows.
-- [ ] Ověřit instalaci a spuštění na podporované distribuci Linuxu.
-- [ ] Připravit jasný postup instalace `llama-cpp-python` pro systémový Python.
+- [x] Windows nabídka `spustit.bat` rozlišuje portable a systémový Python.
+- [x] Portable setup kontroluje chyby stažení a instalace základních závislostí.
+- [x] Windows systémový launcher používá `python -m pip` a kontroluje výsledek instalace.
+- [x] Zastaralá GPU varianta je vypnutá, aby nebyla nabízena jako funkční.
+- [x] Linuxový launcher používá lokální virtuální prostředí `.venv`.
+- [ ] Ověřit portable instalaci na čistém Windows.
+- [ ] Ověřit systémový Python launcher na Windows.
+- [ ] Ověřit Linuxový launcher na Debianu/Ubuntu.
+- [ ] Ověřit instalaci `llama-cpp-python` a embedding modelu.
+- [ ] Navrhnout a otestovat podporovaný GPU postup.
 
 ## Funkce plánované – zatím nejsou hotové
 
@@ -48,8 +48,7 @@ Checklist rozlišuje existující části kódu od funkcí, které jsou teprve p
 - [x] Záložní větev obnoveného projektu existuje.
 - [x] Pracovní větev `cleanup/repository-audit` je oddělená od `main`.
 - [x] Inventura repozitáře je v `docs/REPOSITORY_AUDIT.md`.
-- [ ] Dokončit revizi dokumentace a ověřit odkazy na existující soubory.
-- [ ] Prověřit Windows spouštěcí skripty a závislosti.
+- [x] Dokumentace byla upravena podle aktuálního kódu.
 - [ ] Porovnat historické kopie před archivací nebo odstraněním.
 - [ ] Přidat automatické testy.
 - [ ] Zkontrolovat celý diff pracovní větve.
