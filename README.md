@@ -1,244 +1,142 @@
-# MojeAI - Portable AI asistent s pamětí
+# MojeAI
 
-Přenosný AI asistent, který běží z jedné složky (ideálně na flashdisku).
-Podporuje lokální GGUF modely, Ollamu a cloudová API (Gemini, DeepSeek,
-OpenAI, Claude). Má dlouhodobou paměť, volitelný internet, práci s projekty
-a bezpečnou editaci souborů (s vynucenou zálohou).
+MojeAI je lokální webová aplikace s jednoduchým chatovacím rozhraním. Slouží jako vlastní uživatelská a integrační vrstva nad cloudovými modely, lokálními GGUF modely a Ollamou. Není náhradou za Ollamu.
 
-## Stav
+Projekt je ve vývoji. Aktuální zdrojový kód už je rozdělený do modulů, ale řada zamýšlených funkcí zatím není dokončená.
 
-**v0.1-original** - funkční prototyp, monolitický `app.py`.
+## Co současná verze obsahuje
 
-Vývojový plán (tagy v gitu):
+- Chat s cloudovými poskytovateli Gemini, DeepSeek, OpenAI a Claude.
+- Volitelné použití lokálních GGUF modelů přes `llama-cpp-python`.
+- Rozpoznání dostupných modelů Ollamy, pokud běží její lokální API.
+- Základní dlouhodobou paměť: textové záznamy a vyhledávání podle embeddingů v SQLite.
+- Ruční povolení internetového vyhledávání; prefix `//` vynutí hledání.
+- Nahrávání souborů PDF, TXT, MD, PY a CSV do konverzačního požadavku.
+- Nastavení systémového promptu, výkonových parametrů a API klíčů.
+- Základní evidenci projektů a jejich povolených složek přes API.
 
-| Tag | Fáze | Co přinese |
-|---|---|---|
-| `v0.1-original` | Baseline | Tato verze |
-| `v0.2-refactor` | Refaktor | Rozdělení na `core/`, `routes/`, `static/` |
-| `v0.3-projects` | Projekty | Namespacing paměti, oddělení projektů |
-| `v0.4-tools` | AI nástroje | Function calling + záloha před zápisem |
-| `v0.5-portable` | Portable | Portable Python + venv ve složce |
-| `v0.6-ux` | UX | Streaming, markdown, historie konverzací |
-| `v0.7-light` | Lehká | sqlite-vec místo ChromaDB, nomic-embed přes llama.cpp |
+### Co zatím hotové není
 
-## Rychlý start
+- Ukládání a procházení kompletní historie konverzací.
+- Skutečné předávání nástrojů modelu (function/tool calling) a automatické rozhodování modelu o jejich použití.
+- Čtení a bezpečné úpravy souborů prostřednictvím AI; neexistuje potvrzovací workflow ani zálohování před zápisem.
+- Oddělená paměť jednotlivých projektů a propojení projektů s chatem.
+- Plnohodnotné uživatelské rozhraní pro správu projektů.
+- Streaming odpovědí.
 
-**Windows:**
+## Požadavky
+
+- Python 3.12 je doporučená verze pro současné portable prostředí.
+- Základní knihovny z `requirements.txt`.
+- Pro lokální GGUF modely a sémantické vyhledávání v paměti také `llama-cpp-python`.
+- Pro sémantickou paměť soubor embedding modelu `nomic-embed-text-v1.5.Q8_0.gguf` ve složce `modely/`.
+- Pro použití Ollamy samostatně nainstalovaná a spuštěná Ollama.
+
+## Spuštění
+
+### Windows – doporučené portable prostředí
+
+Portable instalace používá Embedded Python uložený v projektu. Otevři příkazový řádek v kořenové složce projektu a spusť:
+
+```bat
+setup_portable.bat
 ```
 
-spustit.bat
+Skript stáhne Embedded Python 3.12.3, připraví pip a nainstaluje základní závislosti včetně CPU verze `llama-cpp-python`.
 
+Potom spusť:
+
+```bat
+python\python.exe run.py
 ```
-Vyber 1 (CPU) nebo 2 (GPU). Skript nainstaluje závislosti a otevře prohlížeč.
 
-**Linux:**
+Při prvním použití paměti stáhni také embedding model:
+
+```bat
+python\python.exe stahni_model.py
+```
+
+Alternativně lze použít `run.py`, který spustí server portable Pythonem a otevře prohlížeč.
+
+### Windows – systémový Python
+
+Skript `spustit_cpu.bat` používá Python a pip dostupné v systému Windows. Není to portable režim. Nainstaluje pouze balíčky z `requirements.txt` a spustí `app.py`.
+
+Pro lokální GGUF modely a sémantickou paměť je navíc nutné samostatně nainstalovat kompatibilní `llama-cpp-python` a stáhnout embedding model.
+
+`spustit_gpu.bat` je historický instalační skript. Používá zastaralý seznam balíčků a automatická detekce grafické karty nezaručuje funkční GPU akceleraci. Pro běžné spuštění jej zatím nepoužívej.
+
+### Linux
+
+Z kořenové složky projektu:
+
 ```bash
+chmod +x spustit.sh
 ./spustit.sh
 ```
 
-**Ruční spuštění:**
+Skript používá systémové `python3` a `pip3`, instaluje `requirements.txt` a spouští `app.py`. Neinstaluje `llama-cpp-python`; pro lokální GGUF modely a sémantickou paměť je proto nutné tuto závislost doplnit samostatně.
 
-```
-pip install -r requirements.txt
+### Ruční spuštění
+
+```bash
+python -m pip install -r requirements.txt
 python app.py
 ```
 
-Otevři http://localhost:5000
+Aplikace naslouchá pouze na `127.0.0.1:5000`. Otevři:
+
+```
+http://localhost:5000
+```
 
 ## API klíče
 
-1. Zkopíruj `api_klic/gemini.txt.example` na `api_klic/gemini.txt`
-2. Vlož svůj klíč (jen samotný klíč, bez komentářů)
-3. Stejně pro ostatní providery (`deepseek`, `openai`, `claude`)
+Klíč lze uložit přímo v postranním panelu aplikace. Aplikace jej ukládá do souboru `api_klic/<provider>.txt`.
 
-Soubory `api_klic/*.txt` jsou v `.gitignore` - **nikdy se necommitnou**.
-Šablony `.txt.example` se commitují - ty obsahují jen nápovědu.
+Alternativně vytvoř soubor ručně, například:
 
-Před každým commitem zkontroluj:
-
-```
-python kontrola_klicu.py
+```text
+api_klic/gemini.txt
 ```
 
-## Struktura
+Do souboru vlož pouze samotný klíč. Stejný postup platí pro `deepseek.txt`, `openai.txt` a `claude.txt`.
 
-```
-mojeAI/
-├── app.py              ← Flask backend (monolit, fáze 1 ho rozdělí)
-├── requirements.txt
-├── config.example.json ← šablona konfigurace (commituje se)
-├── config.json         ← osobní konfigurace (gitignored)
-├── api_klic/           ← API klíče (skutečné .txt gitignored)
-├── modely/             ← GGUF modely (gitignored)
-├── pamet/              ← vzpomínky (gitignored)
-├── data/               ← ChromaDB (gitignored)
-├── templates/
-│   └── index.html      ← UI
-└── www/                ← portable prohlížeče (gitignored)
-```
+Soubory `api_klic/*.txt` jsou ignorované Gitem. Soubory `*.txt.example` v repozitáři jsou pouze prázdné zástupné soubory, nikoli předvyplněné šablony.
 
-## Bezpečnost
-
-- API klíče **nikdy** necommituj - `kontrola_klicu.py` tě upozorní
-- `config.json` obsahuje osobní cesty - je gitignored
-- GGUF modely jsou velké (GB) - gitignored
-- Před přidáním AI editace souborů bude vynucená záloha + potvrzovací dialog
-
-## Licence
-
-GPLv3 - viz LICENSE.
-
-</BDS:create_file>
-
-<BDS:create_file fileName="GIT_SETUP.md">
-
-```markdown
-# Git Setup - MojeAI
-
-Postup pro první commit původní verze jako `v0.1-original`.
-
-## 1. Kontrola před commitem
+Před commitem můžeš spustit:
 
 ```bash
 python kontrola_klicu.py
-
-Pokud hlásí problém (skutečný klíč v `api_klic/*.txt`), oprav to **před** commitem.
-
-## 2. Inicializace repozitáře
-
-```
-cd mojeAI
-git init
-git branch -M main
 ```
 
-## 3. Přidání souborů (v tomto pořadí)
+Kontrola hledá známé formáty klíčů ve skutečných souborech `.txt`. Nenahrazuje kontrolu změn v Gitu a nezaručuje odhalení všech tajných údajů.
 
-Nejdřív `.gitignore`, aby se binárky nepřidaly omylem:
+## Bezpečnostní upozornění
 
-```
-git add .gitignore
-git add README.md LICENSE GIT_SETUP.md
-git add config.example.json
-git add www/README.md
-git add api_klic/
-git add kontrola_klicu.py
-```
+- Aplikace je určena pouze pro lokální použití. Nemá přihlašování a není připravena k vystavení do internetu ani do nedůvěryhodné sítě.
+- Backend omezuje požadavky na lokální Host a kontroluje Origin u změnových požadavků. Tato omezení nejsou náhradou autentizace ani úplným bezpečnostním auditem.
+- Do Gitu nikdy nevkládej skutečné API klíče, osobní konfiguraci, databáze, paměť ani stažené modely.
+- Připojení složky v současné aplikaci pouze eviduje její cestu; samo o sobě neznamená, že AI umí její obsah číst nebo měnit.
 
-Zkontroluj, že staged není nic velkého a nic tajného:
+## Důležité soubory
 
-```
-git status
-```
+- `app.py` – vytvoření Flask aplikace a lokální bezpečnostní omezení.
+- `config.py` – cesty a načítání konfigurace.
+- `core/providers.py` – komunikace s poskytovateli modelů.
+- `core/memory.py` – ukládání a vyhledávání dlouhodobé paměti.
+- `core/projects.py` – evidence projektů a povolených složek.
+- `routes/` – API endpointy.
+- `static/` a `templates/` – webové rozhraní.
+- `requirements.txt` – základní Python závislosti.
+- `setup_portable.bat` – příprava portable Pythonu ve Windows.
+- `run.py` – spuštění přes portable Python.
+- `stahni_model.py` – stažení embedding modelu.
 
-Očekávaný výstup: jen textové soubory, žádné `.gguf`, žádné `.txt` s klíčem.
+## Stav projektu a plán
 
-## 4. Commit baseline
+Podrobnější přehled implementovaných částí a dalšího postupu je v [STATUS.md](STATUS.md) a [CHECKLIST.md](CHECKLIST.md). Inventura repozitáře je v [docs/REPOSITORY_AUDIT.md](docs/REPOSITORY_AUDIT.md).
 
-```
-git commit -m "v0.1-original: initial portable AI assistant"
-git tag v0.1-original
-```
+## Licence
 
-## 5. Vytvoření GitHub repozitáře
-
-1. Jdi na https://github.com/new
-2. Název: `mojeAI` (nebo jiný)
-3. **Nezakládej** README, .gitignore ani LICENSE (už je máš v commitu)
-4. Vytvoř repo (může být private)
-
-## 6. Připojení remote a push
-
-```
-git remote add origin https://github.com/<tvuj-username>/mojeAI.git
-git push -u origin main
-git push origin v0.1-original
-```
-
-## 7. Co teď máš
-
-- `v0.1-original` tag = zmrazený referenční bod (původní fungující verze)
-- `main` branch = můžeš dál vyvíjet
-- `api_klic/*.txt` jsou lokální a **nikdy se nepushnou**
-- Velké binárky (modely, prohlížeče) nejsou v gitu
-
-## 8. Pokud jsi omylem commitnul klíč
-
-```
-# Zjisti, ve kterém commitu:
-git log --all --full-history -- api_klic/*.txt
-
-# Pokud je to jen v posledním commitu (a ještě nepushnuto):
-git rm --cached api_klic/gemini.txt
-git commit --amend
-
-# Pokud je hlouběji v historii nebo už pushnuto:
-#  1. Okamžitě si nech vyměnit klíč u poskytovatele
-#  2. Použij nástroj git-filter-repo (nebo BFG Repo-Cleaner)
-```
-
-**Klíč, který byl kdy v gitu, považuj za kompromitovaný** - i po smazání z historie mohl někdo mít kopii.
-
-## 9. Jak fungují API klíče
-
-- `api_klic/gemini.txt.example` - šablona v gitu (obsahuje jen nápovědu)
-- `api_klic/gemini.txt` - tvůj skutečný klíč, **gitignored**
-
-Když klonuješ repo na jiný stroj, musíš udělat:
-
-```
-cp api_klic/gemini.txt.example api_klic/gemini.txt
-# a vložit klíč
-```
-
-## 10. Bezpečnostní tip pro pokročilé
-
-Pokud chceš mít `api_klic/gemini.txt` **trackovaný** (např. chceš ho commitovat prázdný),
-ale nechceš, aby se tvůj skutečný klíč omylem commitnul, použij `skip-worktree`:
-
-```
-# Po prvním commitu (ještě než vložíš klíč):
-git update-index --skip-worktree api_klic/gemini.txt
-
-# Teď můžeš klíč vložit a git ho uvidí jako "beze změny"
-# (změny ignoruje, ale při checkoutu ti ho nepřepíše)
-
-# Zrušení:
-git update-index --no-skip-worktree api_klic/gemini.txt
-```
-
-**Pozor:** Toto je pokročilý trik. Pro běžné použití stačí standardní
-pattern `.txt.example` + gitignored `.txt`.
-
-## 11. Co dělat při dalších fázích
-
-Až budeš refaktorovat na moduly:
-
-```
-git checkout -b refactor
-# pracuj na nové verzi
-git commit -m "refactor: split app.py into core/ and routes/"
-git checkout main
-git merge refactor
-git tag v0.2-refactor
-git push origin main --tags
-```
-
-Stejný pattern pro každou další fázi.
-
-</BDS:create_file>
-
-<BDS:create_file fileName="config.example.json">
-
-```json
-{
-  "system_prompt": "Jsi užitečný asistent. Odpovídej česky, stručně a výstižně. Používej přirozenou češtinu bez zbytečných formalit.",
-  "vychozi_model": "gemini",
-  "pristupne_slozky": [],
-  "internet": false,
-  "max_vzpominek": 5,
-  "pocet_souboru_ze_slozky": 10,
-  "pouzit_gpu": false,
-  "gpu_vrstev": 25
-}
-
+GPL-3.0 – viz [LICENSE](LICENSE).
