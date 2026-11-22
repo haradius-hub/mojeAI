@@ -1,48 +1,74 @@
-# MojeAI - Projektový checklist (Stav k 31. 10. 2026)
+# MojeAI – projektový checklist
 
-## ✅ Co už máme hotové
-1. **Fáze 0 (Git)**: Původní kód je zazálohovaný na GitHubu jako `v0.1-original`. Je nastavený `.gitignore` a `kontrola_klicu.py`.
-2. **Fáze 1 (Refaktor)**: Monolitický `app.py` je rozdělen do modulů:
-   - `app.py` (bootstrap)
-   - `config.py` (cesty)
-   - `core/memory.py` (paměť)
-   - `core/providers.py` (AI modely)
-   - `routes/` (API endpointy)
-   - `static/` (JS a CSS oddělené od HTML)
-3. **Cesta B (Lehká verze)**: Zbavili jsme se `chromadb` a `torch`.
-   - Paměť běží na `sqlite-vec` (jednosouborová DB).
-   - Embeddings běží přes `llama-cpp-python` (model `nomic-embed-text`).
-   - Vytvořili jsme `setup_portable.bat` pro Embedded Python.
-   - Vytvořili jsme `run.py`, který spouští lokální Python.
+Checklist rozlišuje existující části kódu od funkcí, které jsou teprve plánované. Zaškrtnutí znamená, že odpovídající implementace je ve zdrojovém stromu; samo o sobě nepotvrzuje úspěšný runtime test.
 
-## 🔧 Aktuální problém (vyřešeno)
-- **Chyba**: `ModuleNotFoundError: No module named 'config'`
-- **Příčina**: Embedded Python neviděl do aktuální složky.
-- **Řešení**: Upravit `python/python312._pth` (přidat tečku na samostatný řádek) a upravit `app.py` (vynutit `sys.path`).
+## Aktuální základ
 
-## 🚀 Co následuje (Fáze 3 - Projekty a AI nástroje)
-Až se nám podaří aplikaci spustit, dalším krokem bude:
-1. **Projekty**: Přidat do UI možnost vytvořit "Projekt" (např. "Web", "Kód", "Osobní"). Každý projekt bude mít vlastní paměť (oddělené DB nebo složky).
-2. **AI Nástroje (Function Calling)**: AI dostane schopnost:
-   - `zapamatuj_si(text)` - rozhodne se, co si uložit do dlouhodobé paměti.
-   - `precti_soubor(cesta)` - přečte soubor z povolené složky.
-   - `zapis_do_souboru(cesta, text)` - **bezpečně** zapíše do souboru. Vytvoří zálohu do `zalohy/` a vyžádá si potvrzení od uživatele v UI.
-3. **UI Vylepšení**: Přidat markdown do chatu, streaming odpovědí a potvrzovací dialogy.
+- [x] Modulární Flask aplikace (`app.py`, `config.py`, `core/`, `routes/`).
+- [x] Webové chatovací rozhraní.
+- [x] Cloudové providery Gemini, DeepSeek, OpenAI a Claude.
+- [x] Detekce lokálních GGUF souborů a jejich obsluha přes `llama-cpp-python`.
+- [x] Volitelné napojení na lokální API Ollamy.
+- [x] SQLite databáze dlouhodobé paměti a textové záznamy v `pamet/`.
+- [x] Sémantické vyhledávání paměti přes embedding model a `llama-cpp-python`.
+- [x] Základní internetové vyhledávání a získání počasí.
+- [x] Nahrávání PDF, TXT, MD, PY a CSV v rámci chatového požadavku.
+- [x] Ukládání API klíčů do lokálních souborů.
+- [x] Základní databázová evidence projektů a povolených složek přes API.
+- [x] Omezení Flask serveru na lokální Host a kontrola Origin u změnových požadavků.
+- [x] Portable instalační skript pro Embedded Python ve Windows.
 
-## 🛠️ Co dělat, když se to rozbije
-- **Chyba `sqlite_vec`**: Zkontroluj, že máš v Pythonu nainstalováno `pip install sqlite-vec`.
-- **Chyba `llama_cpp`**: Ujisti se, že `pip install llama-cpp-python` proběhl úspěšně (v `setup_portable.bat`).
-- **Paměť nefunguje**: Ujisti se, že máš v `modely/` stažený soubor `nomic-embed-text-v1.5.Q8_0.gguf`. Pokud ne, spusť `python\python.exe stahni_model.py`.
+## Provozní cesty
 
-## 📂 Struktura klíčových souborů
-- `app.py` - start aplikace
-- `config.py` - konfigurace cest
-- `core/memory.py` - stará se o ukládání a hledání v paměti (SQLite)
-- `core/providers.py` - připojení k AI (Gemini, DeepSeek, lokální GGUF)
-- `routes/` - API
-- `static/` - frontend (app.js, style.css)
-- `templates/index.html` - hlavní stránka
-- `python/` - portable Python
-- `modely/` - modely (GGUF)
-- `pamet/` - textové soubory paměti (zálohy)
-- `data/` - SQL
+- [x] Portable Windows: `setup_portable.bat` + `python\python.exe run.py`.
+- [x] Windows systémový Python: `spustit_cpu.bat`.
+- [x] Linux systémový Python: `spustit.sh`.
+- [ ] Sjednotit a ověřit instalační postupy pro všechny podporované platformy.
+- [ ] Opravit nebo nahradit historický `spustit_gpu.bat`.
+- [ ] Ověřit instalaci portable prostředí na čistém Windows.
+- [ ] Ověřit instalaci a spuštění na podporované distribuci Linuxu.
+- [ ] Připravit jasný postup instalace `llama-cpp-python` pro systémový Python.
+
+## Funkce plánované – zatím nejsou hotové
+
+- [ ] Historie konverzací: ukládání, seznam, vyhledávání a opětovné otevření.
+- [ ] Projektové rozhraní v UI.
+- [ ] Oddělení kontextu a paměti podle projektu.
+- [ ] Skutečné tool/function calling podporované jednotlivými providery.
+- [ ] Registr nástrojů a bezpečné vykonávání volání.
+- [ ] Čtení souborů z výslovně povolených složek.
+- [ ] Zápis a úpravy souborů až po potvrzení uživatelem.
+- [ ] Automatická záloha před každou změnou souboru.
+- [ ] Zobrazení průběhu a streaming odpovědí.
+- [ ] Uživatelské přihlášení, pokud bude aplikace někdy dostupná mimo localhost.
+- [ ] Více modelů v týmovém pracovním postupu.
+
+## Údržba repozitáře
+
+- [x] Záložní větev obnoveného projektu existuje.
+- [x] Pracovní větev `cleanup/repository-audit` je oddělená od `main`.
+- [x] Inventura repozitáře je v `docs/REPOSITORY_AUDIT.md`.
+- [ ] Dokončit revizi dokumentace a ověřit odkazy na existující soubory.
+- [ ] Prověřit Windows spouštěcí skripty a závislosti.
+- [ ] Porovnat historické kopie před archivací nebo odstraněním.
+- [ ] Přidat automatické testy.
+- [ ] Zkontrolovat celý diff pracovní větve.
+- [ ] Předložit změny ke schválení před případným sloučením do `main`.
+
+## Testy
+
+- [ ] Importní test aplikace v čistém prostředí.
+- [ ] Test vytvoření Flask aplikace a základního endpointu.
+- [ ] Test ukládání a načítání konfigurace.
+- [ ] Test validace a ukládání API klíčů bez použití skutečných klíčů.
+- [ ] Test paměti s dostupným i chybějícím embedding modelem.
+- [ ] Test CRUD operací projektů a oprávnění složek.
+- [ ] Test odmítnutí požadavků s nepovoleným Host/Origin.
+- [ ] Test nahrávání povolených a nepovolených typů souborů.
+
+## Pravidla další práce
+
+1. Zachovat složku `python/`, protože je součástí Windows portable distribuce.
+2. Změny připravovat na pracovní větvi, nikoli přímo na `main`.
+3. Neodstraňovat historické soubory bez porovnání a bezpečné archivace.
+4. Po každé etapě zkontrolovat změny a uvést, co bylo skutečně otestováno.
