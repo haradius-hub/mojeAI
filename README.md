@@ -1,141 +1,126 @@
 # MojeAI
 
-MojeAI je lokální webová aplikace s jednoduchým chatovacím rozhraním. Slouží jako vlastní uživatelská a integrační vrstva nad cloudovými modely, lokálními GGUF modely a Ollamou. Není náhradou za Ollamu.
+MojeAI je lokální webová aplikace pro chat s cloudovými i lokálními jazykovými modely. Poskytuje vlastní uživatelské rozhraní a základní dlouhodobou paměť. Ollamu nenahrazuje – umí se k ní připojit jako ke službě.
 
-Projekt je ve vývoji. Aktuální zdrojový kód už je rozdělený do modulů, ale řada zamýšlených funkcí zatím není dokončená.
+Projekt je ve vývoji. Níže je popsáno, co současná verze skutečně nabízí a jak ji spustit.
 
-## Co současná verze obsahuje
+## Rychlé spuštění
 
-- Chat s cloudovými poskytovateli Gemini, DeepSeek, OpenAI a Claude.
-- Volitelné použití lokálních GGUF modelů přes `llama-cpp-python`.
-- Rozpoznání dostupných modelů Ollamy, pokud běží její lokální API.
-- Základní dlouhodobou paměť: textové záznamy a vyhledávání podle embeddingů v SQLite.
-- Ruční povolení internetového vyhledávání; prefix `//` vynutí hledání.
-- Nahrávání souborů PDF, TXT, MD, PY a CSV do konverzačního požadavku.
-- Nastavení systémového promptu, výkonových parametrů a API klíčů.
-- Základní evidenci projektů a jejich povolených složek přes API.
+### Windows – doporučená portable varianta
 
-### Co zatím hotové není
+1. Stáhni nebo rozbal projekt.
+2. Spusť `spustit.bat`.
+3. Vyber možnost **1 – Portable Python**.
+4. Po dokončení instalace se spustí aplikace a otevře prohlížeč.
 
-- Ukládání a procházení kompletní historie konverzací.
-- Skutečné předávání nástrojů modelu (function/tool calling) a automatické rozhodování modelu o jejich použití.
-- Čtení a bezpečné úpravy souborů prostřednictvím AI; neexistuje potvrzovací workflow ani zálohování před zápisem.
-- Oddělená paměť jednotlivých projektů a propojení projektů s chatem.
-- Plnohodnotné uživatelské rozhraní pro správu projektů.
-- Streaming odpovědí.
+Portable instalace stáhne Embedded Python 3.12.3 a připraví prostředí přímo ve složce projektu. Nainstaluje základní knihovny a pokusí se přidat také CPU verzi `llama-cpp-python`. Pokud se tato doplňková instalace nepodaří, cloudové modely mohou fungovat dál, ale lokální GGUF modely a sémantická paměť nebudou dostupné.
 
-## Požadavky
-
-- Python 3.12 je doporučená verze pro současné portable prostředí.
-- Základní knihovny z `requirements.txt`.
-- Pro lokální GGUF modely a sémantické vyhledávání v paměti také `llama-cpp-python`.
-- Pro sémantickou paměť soubor embedding modelu `nomic-embed-text-v1.5.Q8_0.gguf` ve složce `modely/`.
-- Pro použití Ollamy samostatně nainstalovaná a spuštěná Ollama.
-
-## Spuštění
-
-### Windows – doporučené portable prostředí
-
-Portable instalace používá Embedded Python uložený v projektu. Otevři příkazový řádek v kořenové složce projektu a spusť:
+Případně lze kroky provést ručně:
 
 ```bat
 setup_portable.bat
-```
-
-Skript stáhne Embedded Python 3.12.3, připraví pip a nainstaluje základní závislosti včetně CPU verze `llama-cpp-python`.
-
-Potom spusť:
-
-```bat
 python\python.exe run.py
 ```
 
-Při prvním použití paměti stáhni také embedding model:
+Pro sémantickou paměť je potřeba ještě stáhnout embedding model:
 
 ```bat
 python\python.exe stahni_model.py
 ```
 
-Alternativně lze použít `run.py`, který spustí server portable Pythonem a otevře prohlížeč.
-
 ### Windows – systémový Python
 
-Skript `spustit_cpu.bat` používá Python a pip dostupné v systému Windows. Není to portable režim. Nainstaluje pouze balíčky z `requirements.txt` a spustí `app.py`.
+Pokud už máš Python nainstalovaný ve Windows, spusť `spustit.bat` a vyber možnost **2 – Systémový Python (CPU)**.
 
-Pro lokální GGUF modely a sémantickou paměť je navíc nutné samostatně nainstalovat kompatibilní `llama-cpp-python` a stáhnout embedding model.
+Tato varianta nainstaluje balíčky z `requirements.txt` do zvoleného systémového Pythonu. Pro lokální GGUF modely a sémantickou paměť je navíc nutné samostatně nainstalovat kompatibilní `llama-cpp-python` a stáhnout embedding model.
 
-`spustit_gpu.bat` je historický instalační skript. Používá zastaralý seznam balíčků a automatická detekce grafické karty nezaručuje funkční GPU akceleraci. Pro běžné spuštění jej zatím nepoužívej.
+### Linux – Debian, Ubuntu a odvozené distribuce
 
-### Linux
-
-Z kořenové složky projektu:
+V terminálu přejdi do složky projektu a spusť:
 
 ```bash
 chmod +x spustit.sh
 ./spustit.sh
 ```
 
-Skript používá systémové `python3` a `pip3`, instaluje `requirements.txt` a spouští `app.py`. Neinstaluje `llama-cpp-python`; pro lokální GGUF modely a sémantickou paměť je proto nutné tuto závislost doplnit samostatně.
-
-### Ruční spuštění
+Skript vytvoří lokální virtuální prostředí `.venv`, nainstaluje do něj `requirements.txt` a spustí aplikaci. Na Debianu/Ubuntu může být nejprve potřeba doinstalovat:
 
 ```bash
-python -m pip install -r requirements.txt
-python app.py
+sudo apt install python3-venv
 ```
 
-Aplikace naslouchá pouze na `127.0.0.1:5000`. Otevři:
+Linuxový instalační skript zatím nepřidává `llama-cpp-python`. Bez něj fungují cloudové poskytovatele, ale ne lokální GGUF modely ani sémantická paměť.
+
+Aplikace se otevře na adrese:
 
 ```
 http://localhost:5000
 ```
 
+Server naslouchá pouze na lokálním rozhraní.
+
+## Co aplikace umí
+
+- Chatovat přes API poskytovatelů Gemini, DeepSeek, OpenAI a Claude.
+- Používat lokální GGUF modely přes `llama-cpp-python`.
+- Připojit se k lokálně běžící Ollamě a zobrazit její dostupné modely.
+- Ukládat textové záznamy dlouhodobé paměti do souborů a SQLite.
+- Vyhledávat v paměti pomocí embeddingů; vyžaduje `llama-cpp-python` a embedding model.
+- Vyhledávat na internetu a získávat počasí.
+- Přijmout soubory PDF, TXT, MD, PY a CSV jako součást chatového požadavku.
+- Ukládat API klíče do lokálních souborů.
+- Evidovat projekty a povolené složky přes základní API.
+
+## Co zatím aplikace neumí
+
+Následující funkce jsou plánované, nikoli dokončené:
+
+- Kompletní historii konverzací včetně procházení, vyhledávání a opětovného otevření chatů.
+- Skutečné tool/function calling, při kterém model sám vybere nástroj a aplikace jej bezpečně vykoná.
+- Číst obsah připojených projektových složek a pracovat s jejich soubory.
+- Bezpečně zapisovat a upravovat soubory s potvrzením uživatele a zálohou.
+- Oddělenou paměť a kontext pro jednotlivé projekty.
+- Uživatelské rozhraní pro správu projektů.
+- Ověřený GPU instalační a spouštěcí režim.
+
 ## API klíče
 
-Klíč lze uložit přímo v postranním panelu aplikace. Aplikace jej ukládá do souboru `api_klic/<provider>.txt`.
+Klíče lze vložit přímo v postranním panelu aplikace. Ukládají se do souborů v adresáři `api_klic/`:
 
-Alternativně vytvoř soubor ručně, například:
+- `gemini.txt`
+- `deepseek.txt`
+- `openai.txt`
+- `claude.txt`
 
-```text
-api_klic/gemini.txt
-```
+Do souboru patří pouze samotný klíč. Soubory `api_klic/*.txt` jsou ignorované Gitem. Podrobnosti a odkazy na poskytovatele jsou v [api_klic/README.md](api_klic/README.md).
 
-Do souboru vlož pouze samotný klíč. Stejný postup platí pro `deepseek.txt`, `openai.txt` a `claude.txt`.
+Nikdy necommituj skutečné klíče. Pokud se klíč dostane do veřejného repozitáře, zneplatni jej u poskytovatele a vytvoř nový.
 
-Soubory `api_klic/*.txt` jsou ignorované Gitem. Soubory `*.txt.example` v repozitáři jsou pouze prázdné zástupné soubory, nikoli předvyplněné šablony.
+## Bezpečnost a omezení
 
-Před commitem můžeš spustit:
+- Aplikace nemá přihlašování a je určena pouze pro lokální použití.
+- Nevystavuj ji do internetu ani do nedůvěryhodné sítě.
+- Kontrola lokálního Host a Origin není náhradou autentizace ani úplným bezpečnostním auditem.
+- Do Gitu nepatří API klíče, osobní konfigurace, databáze paměti ani stažené modely.
+- Evidence povolené složky zatím neznamená, že model umí její obsah číst nebo měnit.
 
-```bash
-python kontrola_klicu.py
-```
+## Struktura projektu
 
-Kontrola hledá známé formáty klíčů ve skutečných souborech `.txt`. Nenahrazuje kontrolu změn v Gitu a nezaručuje odhalení všech tajných údajů.
-
-## Bezpečnostní upozornění
-
-- Aplikace je určena pouze pro lokální použití. Nemá přihlašování a není připravena k vystavení do internetu ani do nedůvěryhodné sítě.
-- Backend omezuje požadavky na lokální Host a kontroluje Origin u změnových požadavků. Tato omezení nejsou náhradou autentizace ani úplným bezpečnostním auditem.
-- Do Gitu nikdy nevkládej skutečné API klíče, osobní konfiguraci, databáze, paměť ani stažené modely.
-- Připojení složky v současné aplikaci pouze eviduje její cestu; samo o sobě neznamená, že AI umí její obsah číst nebo měnit.
-
-## Důležité soubory
-
-- `app.py` – vytvoření Flask aplikace a lokální bezpečnostní omezení.
-- `config.py` – cesty a načítání konfigurace.
-- `core/providers.py` – komunikace s poskytovateli modelů.
-- `core/memory.py` – ukládání a vyhledávání dlouhodobé paměti.
-- `core/projects.py` – evidence projektů a povolených složek.
+- `app.py`, `config.py` – spuštění aplikace a konfigurace.
+- `core/` – poskytovatelé modelů, paměť a projekty.
 - `routes/` – API endpointy.
-- `static/` a `templates/` – webové rozhraní.
+- `static/`, `templates/` – webové rozhraní.
 - `requirements.txt` – základní Python závislosti.
-- `setup_portable.bat` – příprava portable Pythonu ve Windows.
-- `run.py` – spuštění přes portable Python.
+- `setup_portable.bat`, `run.py` – portable režim Windows.
+- `spustit.bat`, `spustit_cpu.bat` – nabídka spuštění a systémový Python ve Windows.
+- `spustit.sh` – Linuxový launcher s virtuálním prostředím.
 - `stahni_model.py` – stažení embedding modelu.
 
-## Stav projektu a plán
+Portable prohlížeče lze umístit do podsložek `www/`; jejich použití je volitelné. Viz [www/README.md](www/README.md).
 
-Podrobnější přehled implementovaných částí a dalšího postupu je v [STATUS.md](STATUS.md) a [CHECKLIST.md](CHECKLIST.md). Inventura repozitáře je v [docs/REPOSITORY_AUDIT.md](docs/REPOSITORY_AUDIT.md).
+## Stav a další vývoj
+
+Aktuální stav implementace a plán práce jsou v [STATUS.md](STATUS.md) a [CHECKLIST.md](CHECKLIST.md). Technická inventura repozitáře je v [docs/REPOSITORY_AUDIT.md](docs/REPOSITORY_AUDIT.md).
 
 ## Licence
 
