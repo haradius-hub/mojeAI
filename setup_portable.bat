@@ -10,33 +10,46 @@ echo    MOJEAI - PORTABLE SETUP
 echo ============================================================
 echo.
 
-if not exist "%PYTHON%" (
-    echo [1/4] Stahuji Embedded Python 3.12.3...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.12.3/python-3.12.3-embed-amd64.zip' -OutFile 'python.zip'"
-    if errorlevel 1 goto :download_error
-    if not exist "python.zip" goto :download_error
+if not exist "%PYTHON%" goto :download_python
 
-    echo [2/4] Rozbaluji Python...
-    if not exist "python" mkdir "python"
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Path 'python.zip' -DestinationPath 'python' -Force"
-    if errorlevel 1 goto :extract_error
-    del "python.zip"
-) else (
-    echo [INFO] Portable Python jiz existuje.
+echo [INFO] Kontroluji Portable Python...
+"%PYTHON%" -c "import socket, ssl, sqlite3, zlib" >nul 2>&1
+if errorlevel 1 (
+    echo [VAROVANI] Portable Python je nekompletni nebo poskozeny.
+    echo [INFO] Obnovuji soubory z oficialni distribuce Pythonu...
+    goto :download_python
 )
+goto :python_ready
 
+:download_python
+echo [1/4] Stahuji Embedded Python 3.12.3...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -Uri 'https://www.python.org/ftp/python/3.12.3/python-3.12.3-embed-amd64.zip' -OutFile 'python.zip'"
+if errorlevel 1 goto :download_error
+if not exist "python.zip" goto :download_error
+
+echo [2/4] Rozbaluji nebo obnovuji Python...
+if not exist "python" mkdir "python"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Expand-Archive -Path 'python.zip' -DestinationPath 'python' -Force"
+if errorlevel 1 goto :extract_error
+del "python.zip"
+
+if not exist "%PYTHON%" goto :python_error
+"%PYTHON%" -c "import socket, ssl, sqlite3, zlib" >nul 2>&1
+if errorlevel 1 goto :python_error
+
+:python_ready
 if not exist "python\python312._pth" (
     echo [CHYBA] Soubor python\python312._pth nebyl nalezen.
     goto :error
 )
 
 echo [3/4] Povoleni site-packages...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$p='python\python312._pth'; $c=Get-Content $p; $c=$c -replace '^#import site$','import site'; Set-Content -Path $p -Value $c"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $p='python\python312._pth'; $c=Get-Content $p; $c=$c -replace '^#import site$','import site'; Set-Content -Path $p -Value $c"
 if errorlevel 1 goto :error
 
 if not exist "get-pip.py" (
     echo Stahuji get-pip.py...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://bootstrap.pypa.io/get-pip.py' -OutFile 'get-pip.py'"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -Uri 'https://bootstrap.pypa.io/get-pip.py' -OutFile 'get-pip.py'"
     if errorlevel 1 goto :download_error
 )
 if not exist "get-pip.py" goto :download_error
@@ -80,6 +93,11 @@ goto :error
 :extract_error
 echo [CHYBA] Rozbaleni Embedded Pythonu se nezdarilo.
 if exist "python.zip" del "python.zip"
+goto :error
+
+:python_error
+echo [CHYBA] Ani obnovena distribuce Pythonu neprosla kontrolou modulu.
+echo Zkontroluj antivir a obsah slozky python.
 goto :error
 
 :error
