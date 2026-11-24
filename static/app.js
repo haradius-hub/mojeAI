@@ -260,7 +260,15 @@ async function pridatSlozku(vybranaCesta = null) {
         if (data.status === 'ok') {
             zobrazToast(`✅ ${data.zprava}`);
             document.getElementById('slozkaCesta').value = '';
-            nactiSlozky();
+            const aktualniSlozky = await nactiSlozky();
+            const ulozenaCesta = cesta.replace(/\\/g, '/').toLowerCase();
+            const jeViditelna = aktualniSlozky.some(s =>
+                String(s.cesta || '').replace(/\\/g, '/').toLowerCase() === ulozenaCesta
+            );
+            if (!jeViditelna) {
+                zobrazToast('⚠️ Server složku přijal, ale seznam ji zatím nevrací. Zkontroluj prosím konfiguraci.', true);
+                return;
+            }
             nactiPamet();
         } else {
             zobrazToast(`❌ ${data.zprava}`, true);
@@ -272,8 +280,10 @@ async function pridatSlozku(vybranaCesta = null) {
 
 async function nactiSlozky() {
     try {
-        const res = await fetch('/api/slozky');
+        const res = await fetch('/api/slozky', { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('Neplatná odpověď seznamu složek');
         const list = document.getElementById('slozkyList');
         if (data.length === 0) {
             list.innerHTML = '<span style="color:#8b949e;">Žádné připojené složky</span>';
@@ -286,8 +296,11 @@ async function nactiSlozky() {
                 </div>
             `).join('');
         }
+        return data;
     } catch (e) {
         console.error('Chyba načítání složek:', e);
+        zobrazToast('❌ Seznam připojených složek se nepodařilo načíst.', true);
+        return [];
     }
 }
 
