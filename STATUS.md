@@ -18,6 +18,7 @@ Dlouhodobým cílem je osobní AI pracovní prostředí s historií, dlouhodobou
 - Připojení k lokálnímu API Ollamy a načtení seznamu modelů.
 - Základní internetové vyhledávání a získání počasí.
 - Přijetí PDF, TXT, MD, PY, CSV, DOCX, XLSX, PPTX, ODT, ODS a ODP do konkrétního chatového požadavku. CSV zůstává podporováno; nové kancelářské formáty se extrahují do textového kontextu.
+- Výběr souboru zobrazuje před odesláním kartu s názvem, typem a velikostí; přílohu lze odebrat. Uživatelská zpráva po odeslání zobrazuje název přílohy. Jde o přehled přílohy, nikoli o náhled obsahu dokumentu.
 - Výběr složky systémovým dialogem a její přidání do seznamu připojených složek; uživatel potvrdil funkčnost v Windows portable variantě.
 
 ### Paměť a projekty
@@ -61,6 +62,8 @@ Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovano
 - Nahrávání obrázků PNG, JPG/JPEG a WebP a jejich předávání multimodálním modelům.
 
 ## Stav rozšíření práce se soubory
+
+- UI přehled jedné vybrané přílohy je implementován. Skutečné obrazové náhledy a multimodální zpracování obrázků zatím hotové nejsou.
 
 - Kód pro extrakci DOCX, XLSX, PPTX, ODT, ODS a ODP je přidán do `core/file_processing.py`.
 - Chatový endpoint a výběr souboru v UI přijímají nové formáty; CSV zůstává podporováno.
