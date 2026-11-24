@@ -19,7 +19,14 @@ if errorlevel 1 (
     echo [INFO] Obnovuji soubory z oficialni distribuce Pythonu...
     goto :download_python
 )
-goto :python_ready
+echo [INFO] Kontroluji nainstalovane zavislosti...
+"%PYTHON%" -c "import flask, flask_cors, requests, google.generativeai, openai, huggingface_hub, ddgs, pypdf" >nul 2>&1
+if errorlevel 1 (
+    echo [INFO] Nektere zavislosti chybi. Spustim jejich instalaci.
+    goto :python_ready
+)
+echo [OK] Python i zavislosti jsou pripraveny.
+goto :launch_ready
 
 :download_python
 echo [1/4] Stahuji Embedded Python 3.12.3...
@@ -83,9 +90,12 @@ echo.
 echo ============================================================
 echo    PORTABLE PROSTREDI JE PRIPRAVENO
 echo ============================================================
-echo Spusteni: python\python.exe run.py
+echo Instalace dokoncena. Vracim se do spousteciho skriptu...
 echo.
-pause
+exit /b 0
+
+:launch_ready
+echo [OK] Portable prostredi je pripravene.
 exit /b 0
 
 :download_error
