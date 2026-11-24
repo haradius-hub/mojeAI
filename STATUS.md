@@ -1,6 +1,6 @@
 # MojeAI – aktuální stav projektu
 
-Tento dokument popisuje stav zjištěný kontrolou zdrojového kódu v pracovní větvi `cleanup/repository-audit`. Úpravy spouštěcích skriptů a dokumentace byly zapsány, ale jejich běh na Windows ani Linuxu zatím nebyl prakticky otestován.
+Tento dokument popisuje stav zjištěný kontrolou zdrojového kódu a dosavadním praktickým ověřením v pracovní větvi `cleanup/repository-audit`. Uživatel potvrdil funkční spuštění Windows portable varianty a funkční výběr i připojení složky v aplikaci. Systémový Python na Windows a Linux zatím prakticky ověřeny nebyly.
 
 ## Vize
 
@@ -17,7 +17,8 @@ Dlouhodobým cílem je osobní AI pracovní prostředí s historií, dlouhodobou
 - Lokální GGUF modely přes `llama-cpp-python`.
 - Připojení k lokálnímu API Ollamy a načtení seznamu modelů.
 - Základní internetové vyhledávání a získání počasí.
-- Přijetí PDF, TXT, MD, PY a CSV do konkrétního chatového požadavku.
+- Přijetí PDF, TXT, MD, PY a CSV do konkrétního chatového požadavku. CSV je již součástí současné implementace.
+- Výběr složky systémovým dialogem a její přidání do seznamu připojených složek; uživatel potvrdil funkčnost v Windows portable variantě.
 
 ### Paměť a projekty
 - Dlouhodobá paměť používá SQLite databázi `data/pamet.db` a textové záznamy ve složce `pamet/`.
@@ -39,7 +40,12 @@ Dlouhodobým cílem je osobní AI pracovní prostředí s historií, dlouhodobou
 - `spustit_gpu.bat` je záměrně vypnutý, protože původní detekce GPU a instalace neodpovídaly aktuálnímu kódu.
 - `spustit.sh` používá virtuální prostředí, aby se vyhnul instalaci balíčků do systémového Pythonu (např. Debian/Ubuntu s PEP 668).
 
-Tyto body popisují obsah skriptů, nikoli potvrzené úspěšné spuštění na cílových operačních systémech.
+### Prakticky ověřeno uživatelem
+
+- Windows portable varianta se po instalaci/spuštění otevřela a aplikace fungovala.
+- Systémový dialog pro výběr složky se otevře, vybraná složka se přidá a zobrazí v levém seznamu připojených složek.
+
+Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovanou verzi pracovní větve. Nejde o čistou instalaci na jiném počítači ani o ověření všech spouštěcích variant.
 
 ## Co není implementováno
 
@@ -51,6 +57,14 @@ Tyto body popisují obsah skriptů, nikoli potvrzené úspěšné spuštění na
 - Uživatelské rozhraní pro správu projektů.
 - Přihlášení a řízení oprávnění pro více uživatelů.
 - Ověřená GPU instalace a akcelerace.
+- Rozšířené zpracování dokumentů DOCX, XLSX, PPTX, ODT, ODS a ODP.
+- Nahrávání obrázků PNG, JPG/JPEG a WebP a jejich předávání multimodálním modelům.
+
+## Další etapa práce se soubory
+
+1. Rozšířit zpracování dokumentů o DOCX, XLSX, PPTX, ODT, ODS a ODP; zachovat již existující podporu CSV.
+2. Přidat nahrávání obrázků PNG, JPG/JPEG a WebP a navrhnout jejich předávání pouze providerům/modelům s podporou obrazového vstupu.
+3. Otestovat všechny podporované formáty: extrakci textu a tabulek, obrázkové vstupy, chybné a poškozené soubory, nepodporované typy a limity velikosti.
 
 ## Další technické úkoly
 
@@ -65,4 +79,4 @@ Tyto body popisují obsah skriptů, nikoli potvrzené úspěšné spuštění na
 
 ## Poznámka k ověření
 
-V této etapě byly upraveny texty spouštěcích skriptů a dokumentace na pracovní větvi. Nebyl spuštěn Windows batch soubor, Linuxový shell skript ani samotná aplikace. Nebyla ověřena instalace balíčků, funkčnost modelů ani runtime chování.
+Windows portable aplikaci a připojování složek prakticky ověřil uživatel. Asistent neprováděl samostatný runtime test. Systémový Python, Linuxový launcher, GPU, embedding model a rozšířené formáty souborů zůstávají neověřené.
