@@ -67,7 +67,7 @@ Server naslouchá pouze na lokálním rozhraní.
 - Ukládat textové záznamy dlouhodobé paměti do souborů a SQLite.
 - Vyhledávat v paměti pomocí embeddingů; vyžaduje `llama-cpp-python` a embedding model.
 - Vyhledávat na internetu a získávat počasí.
-- Přijmout soubory PDF, TXT, MD, PY a CSV jako součást chatového požadavku.
+- Přijmout soubory PDF, TXT, MD, PY, CSV, DOCX, XLSX, PPTX, ODT, ODS a ODP jako součást chatového požadavku.
 - Ukládat API klíče do lokálních souborů.
 - Evidovat projekty a povolené složky přes základní API.
 
