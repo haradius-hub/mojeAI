@@ -1,6 +1,7 @@
 let aktualniModel = '';
 let dostupneModely = [];
 let vybranySoubor = null;
+let nahledSouboruUrl = null;
 
 function zobrazToast(zprava, error = false) {
     const toast = document.getElementById('toast');
@@ -319,11 +320,80 @@ async function odebratSlozku(cesta) {
 }
 
 // ====== NAHRÁVÁNÍ SOUBORŮ ======
-document.getElementById('fileInput').addEventListener('change', function(e) {
-    if (e.target.files.length > 0) {
-        vybranySoubor = e.target.files[0];
-        zobrazToast(`📎 Připojen: ${vybranySoubor.name}`);
+function formatVelikostiSouboru(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' kB';
+    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+
+function ikonaPrilohy(pripona) {
+    const ikony = {
+        '.pdf': '📕', '.docx': '📘', '.odt': '📘',
+        '.xlsx': '📗', '.ods': '📗', '.csv': '📊',
+        '.pptx': '📙', '.odp': '📙',
+        '.py': '🐍', '.md': '📝', '.txt': '📄'
+    };
+    return ikony[pripona] || '📎';
+}
+
+function vykresliPrilohu() {
+    const kontejner = document.getElementById('attachmentPreview');
+    if (!kontejner) return;
+    kontejner.replaceChildren();
+
+    if (!vybranySoubor) {
+        kontejner.hidden = true;
+        return;
     }
+
+    const pripona = '.' + (vybranySoubor.name.split('.').pop() || '').toLowerCase();
+    const karta = document.createElement('div');
+    karta.className = 'attachment-card';
+
+    const ikona = document.createElement('span');
+    ikona.className = 'attachment-icon';
+    ikona.textContent = ikonaPrilohy(pripona);
+
+    const informace = document.createElement('div');
+    informace.className = 'attachment-details';
+    const nazev = document.createElement('strong');
+    nazev.textContent = vybranySoubor.name;
+    nazev.title = vybranySoubor.name;
+    const metadata = document.createElement('span');
+    metadata.textContent = pripona.replace('.', '').toUpperCase() + ' · ' + formatVelikostiSouboru(vybranySoubor.size);
+    informace.append(nazev, metadata);
+
+    const odebrat = document.createElement('button');
+    odebrat.type = 'button';
+    odebrat.className = 'attachment-remove';
+    odebrat.textContent = '✕';
+    odebrat.title = 'Odebrat přílohu';
+    odebrat.setAttribute('aria-label', 'Odebrat přílohu');
+    odebrat.addEventListener('click', odebratPrilohu);
+
+    karta.append(ikona, informace, odebrat);
+    kontejner.appendChild(karta);
+    kontejner.hidden = false;
+}
+
+function odebratPrilohu() {
+    if (nahledSouboruUrl) {
+        URL.revokeObjectURL(nahledSouboruUrl);
+        nahledSouboruUrl = null;
+    }
+    vybranySoubor = null;
+    document.getElementById('fileInput').value = '';
+    vykresliPrilohu();
+}
+
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    const soubor = e.target.files && e.target.files[0];
+    if (!soubor) return;
+    if (nahledSouboruUrl) URL.revokeObjectURL(nahledSouboruUrl);
+    vybranySoubor = soubor;
+    nahledSouboruUrl = null;
+    vykresliPrilohu();
+    zobrazToast(`📎 Připojen: ${soubor.name}`);
 });
 
 // ====== ODESLÁNÍ ZPRÁVY ======
@@ -350,7 +420,11 @@ async function poslatDotaz() {
     if (!model) { zobrazToast('❌ Není vybraný žádný model', true); return; }
     
     const messages = document.getElementById('messages');
-    messages.insertAdjacentHTML('beforeend', `<div class="message user">${escapeHtml(dotaz || '📎 Příloha')}<span class="time">${new Date().toLocaleTimeString()}</span></div>`);
+    const souborKOdeslani = vybranySoubor;
+    const detailPrilohy = souborKOdeslani
+        ? `<div class="message-attachment">${ikonaPrilohy('.' + (souborKOdeslani.name.split('.').pop() || '').toLowerCase())} <span>${escapeHtml(souborKOdeslani.name)}</span> <small>${formatVelikostiSouboru(souborKOdeslani.size)}</small></div>`
+        : '';
+    messages.insertAdjacentHTML('beforeend', `<div class="message user">${escapeHtml(dotaz)}${detailPrilohy}<span class="time">${new Date().toLocaleTimeString()}</span></div>`);
     messages.scrollTop = messages.scrollHeight;
     document.getElementById('statusText').textContent = '⏳ Přemýšlím...';
     
@@ -358,18 +432,33 @@ async function poslatDotaz() {
     formData.append('dotaz', dotaz);
     formData.append('model', model);
     formData.append('force_search', force_search);
-    if (vybranySoubor) formData.append('file', vybranySoubor);
-    
+    if (souborKOdeslani) formData.append('file', souborKOdeslani);
+
     vybranySoubor = null;
+    if (nahledSouboruUrl) {
+        URL.revokeObjectURL(nahledSouboruUrl);
+        nahledSouboruUrl = null;
+    }
     document.getElementById('fileInput').value = '';
-    
+    vykresliPrilohu();
+
+    const tlacitkoOdeslat = document.querySelector('.chat-input button:last-child');
+    const puvodniTextTlacitka = tlacitkoOdeslat ? tlacitkoOdeslat.textContent : '';
+    if (tlacitkoOdeslat) {
+        tlacitkoOdeslat.disabled = true;
+        tlacitkoOdeslat.textContent = '⏳ Odesílám…';
+    }
+
     try {
         const res = await fetch('/api/chat', {
             method: 'POST',
             body: formData
         });
         const data = await res.json();
-        
+        if (!res.ok) {
+            throw new Error(data.odpoved || `Server vrátil chybu HTTP ${res.status}`);
+        }
+
         // Zpracování odpovědi - barevné odlišení přemýšlení
         let htmlOdpoved = marked.parse(data.odpoved);
         
@@ -392,7 +481,12 @@ async function poslatDotaz() {
     } catch (err) {
         messages.insertAdjacentHTML('beforeend', `<div class="message assistant" style="color:#f85149;">❌ Chyba: ${escapeHtml(err.message)}</div>`);
         document.getElementById('statusText').textContent = '❌ Chyba';
-        zobrazToast('❌ Chyba komunikace se serverem', true);
+        zobrazToast(err.message || '❌ Chyba komunikace se serverem', true);
+    } finally {
+        if (tlacitkoOdeslat) {
+            tlacitkoOdeslat.disabled = false;
+            tlacitkoOdeslat.textContent = puvodniTextTlacitka;
+        }
     }
 }
 
