@@ -13,7 +13,7 @@ Dlouhodobým cílem je osobní AI pracovní prostředí s historií, dlouhodobou
 ### Aplikace a modely
 - Modulární Flask aplikace: `app.py`, `config.py`, `core/`, `routes/`, `static/` a `templates/`.
 - Chatovací rozhraní a nastavení systémového promptu, modelu, API klíčů, internetu a parametrů lokálního modelu.
-- Poskytovatelé Gemini, DeepSeek, OpenAI a Claude.
+- Poskytovatelé Gemini, DeepSeek, OpenAI a Claude. Gemini používá `google-genai` a Interactions API s modelem `gemini-3.8-flash`; požadavky jsou nastaveny jako `store=False`, aby se konverzace neukládala do serverové historie Gemini.
 - Lokální GGUF modely přes `llama-cpp-python`.
 - Připojení k lokálnímu API Ollamy a načtení seznamu modelů.
 - Základní internetové vyhledávání a získání počasí.
@@ -47,6 +47,12 @@ Dlouhodobým cílem je osobní AI pracovní prostředí s historií, dlouhodobou
 - Systémový dialog pro výběr složky se otevře, vybraná složka se přidá a zobrazí v levém seznamu připojených složek.
 
 Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovanou verzi pracovní větve. Nejde o čistou instalaci na jiném počítači ani o ověření všech spouštěcích variant.
+
+## Gemini API
+
+- Staré `google-generativeai` a model `gemini-2.0-flash` byly nahrazeny SDK `google-genai` a Interactions API s `gemini-3.8-flash`.
+- Gemini volání používá `store=False`; kontext aplikace se předává jako jeden textový vstup a serverová historie Interactions se neukládá.
+- Kód byl staticky zkontrolován, skutečný API požadavek s uživatelským klíčem zatím nebyl proveden.
 
 ## Co není implementováno
 
