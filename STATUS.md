@@ -17,7 +17,7 @@ Dlouhodobým cílem je osobní AI pracovní prostředí s historií, dlouhodobou
 - Lokální GGUF modely přes `llama-cpp-python`.
 - Připojení k lokálnímu API Ollamy a načtení seznamu modelů.
 - Základní internetové vyhledávání a získání počasí.
-- Přijetí PDF, TXT, MD, PY a CSV do konkrétního chatového požadavku. CSV je již součástí současné implementace.
+- Přijetí PDF, TXT, MD, PY, CSV, DOCX, XLSX, PPTX, ODT, ODS a ODP do konkrétního chatového požadavku. CSV zůstává podporováno; nové kancelářské formáty se extrahují do textového kontextu.
 - Výběr složky systémovým dialogem a její přidání do seznamu připojených složek; uživatel potvrdil funkčnost v Windows portable variantě.
 
 ### Paměť a projekty
@@ -60,11 +60,20 @@ Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovano
 - Rozšířené zpracování dokumentů DOCX, XLSX, PPTX, ODT, ODS a ODP.
 - Nahrávání obrázků PNG, JPG/JPEG a WebP a jejich předávání multimodálním modelům.
 
-## Další etapa práce se soubory
+## Stav rozšíření práce se soubory
 
-1. Rozšířit zpracování dokumentů o DOCX, XLSX, PPTX, ODT, ODS a ODP; zachovat již existující podporu CSV.
-2. Přidat nahrávání obrázků PNG, JPG/JPEG a WebP a navrhnout jejich předávání pouze providerům/modelům s podporou obrazového vstupu.
-3. Otestovat všechny podporované formáty: extrakci textu a tabulek, obrázkové vstupy, chybné a poškozené soubory, nepodporované typy a limity velikosti.
+- Kód pro extrakci DOCX, XLSX, PPTX, ODT, ODS a ODP je přidán do `core/file_processing.py`.
+- Chatový endpoint a výběr souboru v UI přijímají nové formáty; CSV zůstává podporováno.
+- Závislosti `python-docx`, `openpyxl`, `python-pptx` a `odfpy` jsou v `requirements.txt`; portable setup kontroluje jejich přítomnost.
+- Extrakce dokumentů převádí text a dostupné tabulkové hodnoty na textový kontext. Nejde o zachování původního formátování ani o obrazovou analýzu vložených obrázků.
+- Je zavedena kontrola ZIP kontejnerů a limit 100 000 znaků extrahovaného textu.
+- Implementace zatím čeká na runtime testy skutečnými dokumenty a na ověření všech tří instalačních cest.
+
+### Další práce se soubory
+
+1. Přidat nahrávání obrázků PNG, JPG/JPEG a WebP a jejich předávání providerům/modelům s podporou obrazového vstupu.
+2. Otestovat PDF, TXT, MD, PY, CSV, DOCX, XLSX, PPTX, ODT, ODS a ODP; ověřit extrakci textu/tabulek, chybné a poškozené soubory, nepodporované typy a limity velikosti.
+3. Otestovat Windows portable instalaci po doplnění nových závislostí, systémový Python a Linux.
 
 ## Další technické úkoly
 
