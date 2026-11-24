@@ -20,7 +20,7 @@ if errorlevel 1 (
     goto :download_python
 )
 echo [INFO] Kontroluji nainstalovane zavislosti...
-"%PYTHON%" -c "import flask, flask_cors, requests, google.generativeai, openai, huggingface_hub, ddgs, pypdf" >nul 2>&1
+"%PYTHON%" -c "import flask, flask_cors, requests, google.generativeai, openai, huggingface_hub, ddgs, pypdf, docx, openpyxl, pptx, odf.opendocument" >nul 2>&1
 if errorlevel 1 (
     echo [INFO] Nektere zavislosti chybi. Spustim jejich instalaci.
     goto :python_ready
