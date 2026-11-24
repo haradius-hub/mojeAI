@@ -78,3 +78,85 @@ body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3;
     font-size: 0.95em;
     opacity: 0.9;
 }
+
+
+/* Přehled vybraného souboru před odesláním */
+.attachment-preview {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: calc(100% + 8px);
+    z-index: 5;
+}
+.chat-input {
+    position: relative;
+}
+.attachment-preview[hidden] {
+    display: none;
+}
+.attachment-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(420px, 100%);
+    padding: 9px 12px;
+    background: #21262d;
+    border: 1px solid #484f58;
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.attachment-icon {
+    font-size: 25px;
+    flex: 0 0 auto;
+}
+.attachment-details {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    gap: 2px;
+}
+.attachment-details strong {
+    overflow: hidden;
+    color: #e6edf3;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.attachment-details span {
+    color: #8b949e;
+    font-size: 11px;
+}
+.attachment-remove {
+    flex: 0 0 auto;
+    padding: 4px 8px !important;
+    background: transparent !important;
+    border: 1px solid #484f58 !important;
+    color: #f85149 !important;
+    border-radius: 6px !important;
+}
+.attachment-remove:hover {
+    background: #3d2023 !important;
+}
+.message-attachment {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 7px;
+    padding: 6px 9px;
+    background: rgba(13, 17, 23, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 7px;
+    font-size: 12px;
+}
+.message-attachment span {
+    overflow-wrap: anywhere;
+}
+.message-attachment small {
+    flex: 0 0 auto;
+    opacity: 0.8;
+}
+.chat-input button:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
