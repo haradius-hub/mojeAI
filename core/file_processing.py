@@ -101,11 +101,8 @@ def _extract_odf(path):
     from odf.teletype import extractText
 
     document = load(path)
-    try:
-        # extractText projde textové uzly dokumentu včetně buněk tabulek a snímků.
-        return extractText(document)
-    finally:
-        document.close()
+    # Tělo ODF dokumentu obsahuje text, tabulky nebo prezentaci podle typu souboru.
+    return extractText(document.body)
 
 
 def extract_document_text(path, extension):
