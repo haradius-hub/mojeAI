@@ -1,7 +1,6 @@
 let aktualniModel = '';
 let dostupneModely = [];
 let vybranySoubor = null;
-let nahledSouboruUrl = null;
 
 function zobrazToast(zprava, error = false) {
     const toast = document.getElementById('toast');
@@ -377,10 +376,6 @@ function vykresliPrilohu() {
 }
 
 function odebratPrilohu() {
-    if (nahledSouboruUrl) {
-        URL.revokeObjectURL(nahledSouboruUrl);
-        nahledSouboruUrl = null;
-    }
     vybranySoubor = null;
     document.getElementById('fileInput').value = '';
     vykresliPrilohu();
@@ -389,9 +384,7 @@ function odebratPrilohu() {
 document.getElementById('fileInput').addEventListener('change', function(e) {
     const soubor = e.target.files && e.target.files[0];
     if (!soubor) return;
-    if (nahledSouboruUrl) URL.revokeObjectURL(nahledSouboruUrl);
     vybranySoubor = soubor;
-    nahledSouboruUrl = null;
     vykresliPrilohu();
     zobrazToast(`📎 Připojen: ${soubor.name}`);
 });
@@ -435,10 +428,6 @@ async function poslatDotaz() {
     if (souborKOdeslani) formData.append('file', souborKOdeslani);
 
     vybranySoubor = null;
-    if (nahledSouboruUrl) {
-        URL.revokeObjectURL(nahledSouboruUrl);
-        nahledSouboruUrl = null;
-    }
     document.getElementById('fileInput').value = '';
     vykresliPrilohu();
 
