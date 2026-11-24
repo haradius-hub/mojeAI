@@ -7,3 +7,9 @@ openai==1.10.0
 huggingface-hub==0.20.3
 ddgs
 pypdf>=4.2,<6
+
+# Zpracování kancelářských dokumentů (OOXML a OpenDocument)
+python-docx>=1.1.2,<2
+openpyxl>=3.1.5,<4
+python-pptx>=1.0.2,<2
+odfpy>=1.4.1,<2
