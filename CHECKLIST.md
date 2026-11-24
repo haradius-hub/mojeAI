@@ -12,6 +12,10 @@ Checklist rozlišuje existující implementaci od plánovaných funkcí. Zaškrt
 - [x] Sémantické vyhledávání paměti přes embedding model a `llama-cpp-python`.
 - [x] Základní internetové vyhledávání a získání počasí.
 - [x] Nahrávání PDF, TXT, MD, PY a CSV v rámci chatového požadavku.
+- [x] Zobrazit vybranou přílohu před odesláním včetně názvu, typu a velikosti.
+- [x] Umožnit odebrání vybrané přílohy před odesláním.
+- [x] Zobrazit název a velikost přílohy také v odeslané uživatelské zprávě.
+- [ ] Přidat skutečné obrazové miniatury a multimodální zpracování PNG, JPG/JPEG a WebP.
 - [x] Ukládání API klíčů do lokálních souborů.
 - [x] Základní databázová evidence projektů a povolených složek přes API.
 - [x] Omezení Flask serveru na lokální Host a kontrola Origin u změnových požadavků.
