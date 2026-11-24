@@ -9,6 +9,10 @@ from config import Config
 
 class MemoryManager:
     def __init__(self):
+        # Slozky musi existovat jeste pred pripojenim SQLite.
+        # MemoryManager se vytvari uz pri importu routes, tedy pred create_app().
+        Config.init_dirs()
+
         self.db_path = os.path.join(Config.DATA_DIR, "pamet.db")
         self.model_path = os.path.join(Config.MODELY_DIR, "nomic-embed-text-v1.5.Q8_0.gguf")
         
