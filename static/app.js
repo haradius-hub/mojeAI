@@ -14,15 +14,20 @@ function zobrazToast(zprava, error = false) {
 // ====== VÝBĚR SLOŽKY PŘES DIALOG ======
 async function otevritDialogSlozky() {
     try {
-        zobrazToast('⏳ Otevírám okno pro výběr složky...');
+        zobrazToast('⏳ Otevírám systémové okno pro výběr složky...');
         const res = await fetch('/api/vybrat-slozku');
         const data = await res.json();
+
         if (data.status === 'ok' && data.cesta) {
             document.getElementById('slozkaCesta').value = data.cesta;
-            zobrazToast('✅ Složka vybrána');
+            zobrazToast('✅ Složka vybrána. Kliknutím na „Připojit složku“ ji přidáš.');
+        } else if (data.status === 'cancel') {
+            zobrazToast('Výběr složky byl zrušen.');
+        } else {
+            zobrazToast(data.zprava || 'Nepodařilo se otevřít dialog.', true);
         }
     } catch (e) {
-        zobrazToast('❌ Nepodařilo se otevřít dialog.', true);
+        zobrazToast('❌ Chyba při komunikaci s dialogem pro výběr složky.', true);
     }
 }
 
