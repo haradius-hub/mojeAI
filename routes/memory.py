@@ -123,7 +123,10 @@ def zobraz_slozky():
             slozky.append({'cesta': cesta, 'pocet': pocet})
         else:
             slozky.append({'cesta': cesta, 'pocet': 0, 'chybi': True})
-    return jsonify(slozky)
+    response = jsonify(slozky)
+    # Seznam oprávnění se mění za běhu; prohlížeč nesmí zobrazovat starou cache.
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    return response
 
 
 @memory_bp.route('/api/slozka', methods=['POST'])
