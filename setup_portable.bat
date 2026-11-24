@@ -47,19 +47,21 @@ echo [3/4] Povoleni site-packages...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $p='python\python312._pth'; $c=Get-Content $p; $c=$c -replace '^#import site$','import site'; Set-Content -Path $p -Value $c"
 if errorlevel 1 goto :error
 
-if not exist "get-pip.py" (
-    echo Stahuji get-pip.py...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -Uri 'https://bootstrap.pypa.io/get-pip.py' -OutFile 'get-pip.py'"
-    if errorlevel 1 goto :download_error
-)
+echo Cistim predchozi Python balicky...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; $p='python\Lib\site-packages'; if (Test-Path $p) { Remove-Item -LiteralPath $p -Recurse -Force }; New-Item -ItemType Directory -Force -Path $p | Out-Null"
+if errorlevel 1 goto :error
+
+echo Stahuji get-pip.py...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -Uri 'https://bootstrap.pypa.io/get-pip.py' -OutFile 'get-pip.py'"
+if errorlevel 1 goto :download_error
 if not exist "get-pip.py" goto :download_error
 
-"%PYTHON%" -m pip --version >nul 2>&1
-if errorlevel 1 (
-    echo Instaluji pip...
-    "%PYTHON%" get-pip.py
-    if errorlevel 1 goto :error
-)
+echo Instaluji cisty pip...
+"%PYTHON%" get-pip.py
+if errorlevel 1 goto :error
+
+"%PYTHON%" -m pip --version
+if errorlevel 1 goto :error
 
 echo.
 echo [4/4] Instaluji zakladni zavislosti...
