@@ -43,6 +43,28 @@ Checklist rozlišuje existující implementaci od plánovaných funkcí. Zaškrt
 - [ ] Uživatelské přihlášení, pokud bude aplikace někdy dostupná mimo localhost.
 - [ ] Více modelů v týmovém pracovním postupu.
 
+### Git a hostingové služby – plánované rozšíření
+
+Cílem je umožnit MojeAI orientovat se v repozitářích a později v nich bezpečně pracovat. Integrace nemá být omezena pouze na GitHub; aplikace má používat jednotné rozhraní a konkrétní služby obsluhovat přes adaptéry.
+
+- [ ] Navrhnout obecný systém integrací, připojení a oprávnění.
+- [ ] Zavést jednotné rozhraní pro Git operace, nezávislé na konkrétním poskytovateli.
+- [ ] GitHub – nejprve režim pouze pro čtení: repozitáře, soubory, větve, historie, commity, diff, issues, pull requesty a vyhledávání kódu.
+- [ ] Gitea a Forgejo – podpora přes samostatné adaptéry, přednostně režim pouze pro čtení.
+- [ ] Lokální Git – práce s lokálními repozitáři, stav pracovního stromu, diff, historie a větve.
+- [ ] GitLab a další kompatibilní služby – rozšíření po ověření společného rozhraní.
+- [ ] Obecné Git remote adresy přes HTTPS/SSH tam, kde je lze bezpečně obsloužit.
+- [ ] Aktivní operace: vytvoření pracovní větve, příprava změn souborů, commit, push a vytvoření pull/merge requestu.
+- [ ] Před každou operací měnící repozitář vyžadovat výslovné potvrzení uživatele; merge nepovolovat automaticky.
+- [ ] Zobrazit návrh změn a diff před potvrzením zápisu nebo commitu.
+- [ ] Ukládat přístupové tokeny a klíče odděleně od projektové paměti a nikdy je neposílat modelu jako běžný kontext.
+- [ ] Považovat obsah repozitáře, README, issues i komentáře za nedůvěryhodná data, nikoli za instrukce, které mohou přepsat systémová pravidla nebo vyvolat neodsouhlasené akce.
+- [ ] Omezovat oprávnění podle připojení a projektu; výchozí režim má být pouze pro čtení.
+
+Doporučené pořadí: (1) obecný systém integrací a oprávnění, (2) GitHub read-only, (3) Gitea/Forgejo read-only, (4) lokální Git a pracovní větve, (5) schvalované zápisové operace, (6) GitLab a další poskytovatelé.
+
+Tato část je plánem, nikoli potvrzením implementace. Jednotlivé integrace ani Git operace zatím nejsou tímto zápisem vytvořeny.
+
 ## Údržba repozitáře
 
 - [x] Záložní větev obnoveného projektu existuje.
