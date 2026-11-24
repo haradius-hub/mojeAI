@@ -85,10 +85,17 @@ class Providers:
         klic = Providers.nacti_klic("gemini")
         if not klic: return "❌ Chybí Gemini klíč."
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=klic)
-            model = genai.GenerativeModel('gemini-2.0-flash')
-            return model.generate_content(prompt).text
+            from google import genai
+            client = genai.Client(api_key=klic)
+            interaction = client.interactions.create(
+                model="gemini-3.8-flash",
+                input=prompt,
+                store=False
+            )
+            odpoved = interaction.output_text
+            if not odpoved:
+                return "❌ Gemini vrátilo prázdnou odpověď."
+            return odpoved
         except Exception as e:
             return f"❌ Chyba Gemini: {str(e)}"
 
