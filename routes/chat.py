@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from config import Config
 from core.memory import memory_manager
 from core.providers import Providers
+from core.file_processing import extract_document_text
 from datetime import datetime
 import requests
 import os
@@ -96,7 +97,10 @@ def chat():
     if nahrany_soubor:
         puvodni_nazev = secure_filename(nahrany_soubor.filename or '')
         pripona = os.path.splitext(puvodni_nazev)[1].lower()
-        povolene_pripony = {'.pdf', '.txt', '.md', '.py', '.csv'}
+        povolene_pripony = {
+            '.pdf', '.txt', '.md', '.py', '.csv',
+            '.docx', '.xlsx', '.pptx', '.odt', '.ods', '.odp'
+        }
         if pripona not in povolene_pripony:
             return jsonify({'odpoved': 'Nepodporovaný typ souboru.'}), 400
         temp_file = tempfile.NamedTemporaryFile(prefix='mojeai_', suffix=pripona, delete=False)
@@ -115,16 +119,23 @@ def chat():
                     zbyva -= len(casti[-1])
                     if zbyva <= 0:
                         break
-                text_ze_souboru = "\n".join(casti)
+                text_ze_souboru = "\\n".join(casti)
+            elif pripona in {'.docx', '.xlsx', '.pptx', '.odt', '.ods', '.odp'}:
+                text_ze_souboru = extract_document_text(cesta, pripona)
             else:
-                with open(cesta, 'r', encoding='utf-8') as f:
+                with open(cesta, 'r', encoding='utf-8-sig') as f:
                     text_ze_souboru = f.read(100001)
                 if len(text_ze_souboru) > 100000:
                     return jsonify({'odpoved': 'Textový obsah souboru překračuje limit 100 000 znaků.'}), 413
+        except ValueError as e:
+            kod = 413 if 'překračuje limit' in str(e) or 'překračuje bezpečnostní limit' in str(e) else 400
+            return jsonify({'odpoved': str(e)}), kod
         except Exception as e:
-            text_ze_souboru = f"[Chyba při čtení souboru: {e}]"
+            print(f"[CHYBA] Nepodařilo se přečíst nahraný soubor: {type(e).__name__}: {e}")
+            return jsonify({'odpoved': 'Soubor se nepodařilo přečíst. Může být poškozený nebo mít nepodporovaný obsah.'}), 400
         finally:
-            if os.path.exists(cesta): os.remove(cesta)
+            if os.path.exists(cesta):
+                os.remove(cesta)
 
     config = Config.nacti()
     ted = datetime.now().strftime("%d.%m.%Y %H:%M")
