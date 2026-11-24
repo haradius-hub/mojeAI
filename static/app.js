@@ -19,8 +19,8 @@ async function otevritDialogSlozky() {
         const data = await res.json();
 
         if (data.status === 'ok' && data.cesta) {
-            document.getElementById('slozkaCesta').value = data.cesta;
-            zobrazToast('✅ Složka vybrána. Kliknutím na „Připojit složku“ ji přidáš.');
+            // Vybraná složka se rovnou připojí; stejné tlačítko už znovu neotevírá dialog.
+            await pridatSlozku(data.cesta);
         } else if (data.status === 'cancel') {
             zobrazToast('Výběr složky byl zrušen.');
         } else {
@@ -247,8 +247,8 @@ async function ulozVykon() {
 }
 
 // ====== SLOŽKY ======
-async function pridatSlozku() {
-    const cesta = document.getElementById('slozkaCesta').value.trim();
+async function pridatSlozku(vybranaCesta = null) {
+    const cesta = (vybranaCesta || document.getElementById('slozkaCesta').value).trim();
     if (!cesta) { zobrazToast('❌ Zadej cestu ke složce!', true); return; }
     try {
         const res = await fetch('/api/slozka', {
