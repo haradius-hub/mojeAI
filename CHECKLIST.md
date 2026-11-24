@@ -16,18 +16,34 @@ Checklist rozlišuje existující implementaci od plánovaných funkcí. Zaškrt
 - [x] Základní databázová evidence projektů a povolených složek přes API.
 - [x] Omezení Flask serveru na lokální Host a kontrola Origin u změnových požadavků.
 
-## Spouštění a instalace – skripty upraveny, čekají na test
+## Spouštění a instalace – částečně ověřeno
 
 - [x] Windows nabídka `spustit.bat` rozlišuje portable a systémový Python.
 - [x] Portable setup kontroluje chyby stažení a instalace základních závislostí.
 - [x] Windows systémový launcher používá `python -m pip` a kontroluje výsledek instalace.
 - [x] Zastaralá GPU varianta je vypnutá, aby nebyla nabízena jako funkční.
 - [x] Linuxový launcher používá lokální virtuální prostředí `.venv`.
-- [ ] Ověřit portable instalaci na čistém Windows.
+- [x] Uživatelsky ověřit spuštění Windows portable varianty a otevření aplikace.
+- [x] Uživatelsky ověřit systémový výběr složky, její přidání a zobrazení v seznamu.
+- [ ] Ověřit portable instalaci na čistém Windows / jiném počítači.
 - [ ] Ověřit systémový Python launcher na Windows.
 - [ ] Ověřit Linuxový launcher na Debianu/Ubuntu.
 - [ ] Ověřit instalaci `llama-cpp-python` a embedding modelu.
 - [ ] Navrhnout a otestovat podporovaný GPU postup.
+
+## Rozšíření práce se soubory – plán další etapy
+
+Současné nahrávání v chatovém požadavku již podporuje PDF, TXT, MD, PY a CSV. CSV tedy není nová funkce; zůstává součástí cílové sady podporovaných dokumentů.
+
+- [ ] Přidat extrakci obsahu z DOCX.
+- [ ] Přidat zpracování XLSX včetně obsahu listů a tabulek.
+- [ ] Přidat zpracování PPTX včetně textu snímků.
+- [ ] Přidat zpracování ODT, ODS a ODP.
+- [ ] Přidat nahrávání obrázků PNG, JPG/JPEG a WebP.
+- [ ] Předávat obrázky multimodálním providerům/modelům, které podporují obrazový vstup; u ostatních jasně oznámit nepodporovanou funkci.
+- [ ] Otestovat všechny podporované formáty, extrakci obsahu, chybné a poškozené soubory, nepodporované typy a limity velikosti.
+
+Doporučené pořadí: (1) rozšíření dokumentů včetně zachování CSV, (2) obrázky a multimodální předávání, (3) společné testování všech formátů.
 
 ## Funkce plánované – zatím nejsou hotové
 
@@ -86,6 +102,8 @@ Tato část je plánem, nikoli potvrzením implementace. Jednotlivé integrace a
 - [ ] Test CRUD operací projektů a oprávnění složek.
 - [ ] Test odmítnutí požadavků s nepovoleným Host/Origin.
 - [ ] Test nahrávání povolených a nepovolených typů souborů.
+- [ ] Test extrakce obsahu DOCX, XLSX, PPTX, ODT, ODS a ODP.
+- [ ] Test předávání PNG, JPG/JPEG a WebP multimodálním modelům.
 
 ## Pravidla další práce
 
