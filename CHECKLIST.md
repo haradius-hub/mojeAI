@@ -31,19 +31,24 @@ Checklist rozlišuje existující implementaci od plánovaných funkcí. Zaškrt
 - [ ] Ověřit instalaci `llama-cpp-python` a embedding modelu.
 - [ ] Navrhnout a otestovat podporovaný GPU postup.
 
-## Rozšíření práce se soubory – plán další etapy
+## Rozšíření práce se soubory – implementováno, čeká na runtime test
 
-Současné nahrávání v chatovém požadavku již podporuje PDF, TXT, MD, PY a CSV. CSV tedy není nová funkce; zůstává součástí cílové sady podporovaných dokumentů.
+Současné nahrávání v chatovém požadavku podporuje PDF, TXT, MD, PY a CSV. CSV zůstává zachováno.
 
-- [ ] Přidat extrakci obsahu z DOCX.
-- [ ] Přidat zpracování XLSX včetně obsahu listů a tabulek.
-- [ ] Přidat zpracování PPTX včetně textu snímků.
-- [ ] Přidat zpracování ODT, ODS a ODP.
-- [ ] Přidat nahrávání obrázků PNG, JPG/JPEG a WebP.
-- [ ] Předávat obrázky multimodálním providerům/modelům, které podporují obrazový vstup; u ostatních jasně oznámit nepodporovanou funkci.
-- [ ] Otestovat všechny podporované formáty, extrakci obsahu, chybné a poškozené soubory, nepodporované typy a limity velikosti.
+- [x] Přidat extrakci obsahu z DOCX.
+- [x] Přidat zpracování XLSX včetně listů a tabulkových hodnot.
+- [x] Přidat zpracování PPTX včetně textu snímků a tabulek.
+- [x] Přidat zpracování ODT, ODS a ODP.
+- [x] Přidat nové formáty do výběru souboru v uživatelském rozhraní.
+- [x] Přidat potřebné knihovny do `requirements.txt`.
+- [x] Rozšířit kontrolu závislostí ve Windows portable setupu.
+- [x] Omezit velikost extrahovaného textu a kontrolovat ZIP kontejner kancelářských dokumentů.
+- [ ] Prakticky otestovat každý formát na reálném souboru.
+- [ ] Otestovat poškozené dokumenty, nepodporované typy a překročení limitů.
+- [ ] Ověřit novou portable instalaci a doplnění závislostí ve stávající portable instalaci.
+- [ ] Ověřit systémový Python na Windows a Linuxový launcher.
 
-Doporučené pořadí: (1) rozšíření dokumentů včetně zachování CSV, (2) obrázky a multimodální předávání, (3) společné testování všech formátů.
+Další pořadí: (1) obrázky PNG, JPG/JPEG a WebP včetně předávání multimodálním providerům, (2) společné testování všech podporovaných formátů. Kancelářské dokumenty se převádějí na textový kontext; vložené obrázky se zatím neanalyzují.
 
 ## Funkce plánované – zatím nejsou hotové
 
