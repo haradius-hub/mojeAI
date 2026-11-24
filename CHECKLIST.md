@@ -6,6 +6,7 @@ Checklist rozlišuje existující implementaci od plánovaných funkcí. Zaškrt
 
 - [x] Modulární Flask aplikace a webové chatovací rozhraní.
 - [x] Cloudové providery Gemini, DeepSeek, OpenAI a Claude.
+- [x] Migrovat Gemini na `google-genai` Interactions API a model `gemini-3.8-flash` (čeká na praktický test s API klíčem).
 - [x] Detekce lokálních GGUF souborů a jejich obsluha přes `llama-cpp-python`.
 - [x] Volitelné napojení na lokální API Ollamy.
 - [x] SQLite databáze dlouhodobé paměti a textové záznamy.
