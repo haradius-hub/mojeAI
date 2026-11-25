@@ -374,3 +374,49 @@ Než se začne implementovat, provést cílený audit aktuálního kódu a datab
 5. Rozdělit práci na malé, samostatně testovatelné etapy.
 
 Veškeré změny zůstávají na `cleanup/repository-audit`. Větev `main` se nemění bez výslovného souhlasu uživatele.
+
+
+## 9. Zjištění z kontroly současného kódu
+
+Kontrola souborů ve větvi `cleanup/repository-audit` ukázala následující skutečnosti. Jde o statickou kontrolu zdrojového kódu, nikoli o runtime test.
+
+### Projekty
+
+- `core/projects.py` používá samostatnou databázi `data/projects.db`.
+- Tabulka `projects` již ukládá název, popis a instrukce.
+- Tabulka `project_folders` eviduje povolené složky a režim `read` / `read_write`.
+- Backend obsahuje základní CRUD operace a kontrolu překrývajících se cest.
+- `routes/projects.py` zpřístupňuje API pro projekty a jejich složky.
+- Projektová data zatím nejsou propojena s chatovými požadavky ani s projektovou pamětí.
+- Projektové API zatím není správa projektů v uživatelském rozhraní.
+
+### Paměť a historie
+
+- `core/memory.py` používá samostatnou databázi `data/pamet.db` a textové soubory ve složce paměti.
+- Současná chatová routa ukládá otázku i odpověď automaticky jako záznamy paměti.
+- To směšuje historii konverzace s dlouhodobou pamětí. Před zavedením plnohodnotné historie je potřeba tyto odpovědnosti oddělit.
+- Paměť nemá projektové ID ani oddělení podle projektu.
+- Není k dispozici trvalý záznam zpráv s identifikátory a rodičovskými vazbami potřebnými pro větvení.
+
+### Chat a úlohy
+
+- `routes/chat.py` provádí požadavek synchronně: sestaví prompt, zavolá poskytovatele a vrátí odpověď.
+- Není zde persistentní evidence úloh, fronta, stav čekání na schválení ani obnova po restartu.
+- Frontend `static/app.js` zobrazuje u zpráv čas místního zobrazení (hodiny), nikoli dobu generování odpovědi. Měření skutečné délky požadavku a metriky tokenů/rychlosti je samostatný budoucí úkol.
+- Týmová spolupráce modelů proto potřebuje nejprve společný datový model konverzací a úloh.
+
+### Nástroje a oprávnění
+
+- Evidence projektových složek je již přítomna, ale sama o sobě neznamená, že model umí obsah složek číst nebo měnit.
+- V současné chatové routě není skutečný provider-agnostický cyklus tool calling.
+- Schvalovací centrum proto musí vzniknout spolu s registrem nástrojů a serverovou kontrolou oprávnění; samotné tlačítko v UI by bezpečnost nezajišťovalo.
+
+### Dopad na další postup
+
+1. Nejdříve navrhnout oddělení historie, dlouhodobé paměti a projektového kontextu.
+2. Zavést stabilní identifikátory konverzací a zpráv; připravit model pro větvení, ale UI větvení zatím neimplementovat.
+3. Připojit existující projekty k chatům a jejich zdrojům.
+4. Navrhnout centrální oprávnění a schvalovací vrstvu dříve, než se aktivují zápisové nástroje.
+5. Zavést trvalou evidenci úloh před delšími agentními a vícemodelovými běhy.
+
+Tato zjištění potvrzují, že A–E je vhodné navrhovat společně. Neznamenají však, že se má všech pět oblastí implementovat současně.
