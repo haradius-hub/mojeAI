@@ -24,7 +24,7 @@ Dlouhodobým cílem je osobní AI pracovní prostředí s historií, dlouhodobou
 ### Paměť a projekty
 - Dlouhodobá paměť používá SQLite databázi `data/pamet.db` a textové záznamy ve složce `pamet/`.
 - Sémantické vyhledávání vyžaduje `llama-cpp-python` a model `nomic-embed-text-v1.5.Q8_0.gguf`.
-- Backend eviduje projekty, popisy, instrukce a povolené složky. Projekty zatím nejsou propojené s chatem ani oddělenou pamětí.
+- Backend eviduje projekty, popisy, instrukce a povolené složky v hlavní databázi `data/mojeai.db`. Historická `data/projects.db` se při prvním startu importuje read-only migrací a zůstává zachována. Projekty zatím nejsou propojené s chatem ani oddělenou pamětí.
 
 ### Provoz a bezpečnost
 - Windows portable: Embedded Python 3.12.3, `setup_portable.bat` a `run.py`.
@@ -53,6 +53,16 @@ Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovano
 - Staré `google-generativeai` a model `gemini-2.0-flash` byly nahrazeny SDK `google-genai` a Interactions API s `gemini-3.8-flash`.
 - Gemini volání používá `store=False`; kontext aplikace se předává jako jeden textový vstup a serverová historie Interactions se neukládá.
 - Kód byl staticky zkontrolován, skutečný API požadavek s uživatelským klíčem zatím nebyl proveden.
+
+## Databázový základ – první implementační etapa
+
+- Hlavní SQLite databáze `data/mojeai.db` je inicializována verzovaným migračním mechanismem.
+- Migrace 1 vytváří tabulky projektů, povolených složek a index.
+- Migrace 2 bezpečně kopíruje existující projekty a složky z `data/projects.db`, zachovává jejich ID a původní databázi otevírá pouze pro čtení.
+- Migrace jsou evidovány v tabulce `schema_migrations`; každá změna schématu/import je provedena v transakci.
+- `data/pamet.db` a soubory ve složce `pamet/` zůstávají mimo tuto migraci a nejsou upravovány.
+- Přidány automatické testy migrace: čistá databáze, zachování dat, opakované spuštění, odmítnutí vadného schématu a CRUD projektů.
+- Testy byly přidány, ale jejich spuštění zatím nebylo v tomto pracovním prostředí potvrzeno.
 
 ## Co není implementováno
 
