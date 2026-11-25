@@ -173,3 +173,15 @@ Podrobný návrh a srovnání existujících řešení: [docs/ANALYZA_EXISTUJICI
 - [ ] Ověřit základní automatické testy před implementací nových agentních schopností.
 
 Pořadí implementace se řídí dokumentem `docs/ANALYZA_EXISTUJICICH_RESENI.md`. Všechny položky jsou plánované; jejich zaškrtnutí bude vyžadovat skutečnou implementaci a odpovídající ověření.
+
+
+### Datový základ – návrh po auditu, zatím neimplementováno
+- [ ] Zálohování a automatické testy databázových migrací.
+- [ ] Zavést hlavní relační databázi `data/mojeai.db` a verzování schématu.
+- [ ] Bezpečně migrovat projekty a povolené složky z `projects.db`; původní databázi ponechat do ověření.
+- [ ] Zachovat `pamet.db` a oddělit dlouhodobou paměť od historie.
+- [ ] Přidat trvalé ukládání konverzací a zpráv se stabilními ID.
+- [ ] Připojit konverzace k projektům a ověřovat přístup ke zdrojům na serveru.
+- [ ] Navrhnout a otestovat rodičovské vazby zpráv pro budoucí větvení.
+
+Podrobný návrh: [docs/DATOVY_MODEL.md](docs/DATOVY_MODEL.md). Návrh zatím nepředstavuje implementaci.
