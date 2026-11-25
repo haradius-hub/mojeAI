@@ -167,7 +167,7 @@ Podrobný návrh a srovnání existujících řešení: [docs/ANALYZA_EXISTUJICI
 ### Společné technické předpoklady
 - [ ] Oddělit historii konverzací od dlouhodobé osobní paměti.
 - [ ] Propojit konverzace a zprávy s projekty.
-- [ ] Navrhnout verzované databázové migrace.
+- [x] Zavést verzované databázové migrace pro hlavní databázi (zatím pouze projektové schéma a import starých projektů).
 - [ ] Zavést centrální serverovou kontrolu oprávnění pro nástroje.
 - [ ] Připravit auditní záznamy důležitých operací.
 - [ ] Ověřit základní automatické testy před implementací nových agentních schopností.
@@ -176,9 +176,10 @@ Pořadí implementace se řídí dokumentem `docs/ANALYZA_EXISTUJICICH_RESENI.md
 
 
 ### Datový základ – návrh po auditu, zatím neimplementováno
-- [ ] Zálohování a automatické testy databázových migrací.
-- [ ] Zavést hlavní relační databázi `data/mojeai.db` a verzování schématu.
-- [ ] Bezpečně migrovat projekty a povolené složky z `projects.db`; původní databázi ponechat do ověření.
+- [x] Zavést hlavní relační databázi `data/mojeai.db` a verzování schématu pro projektové tabulky.
+- [x] Připravit transakční migraci projektů a povolených složek z `projects.db`; zdrojová databáze se otevírá pouze pro čtení a nemaže se.
+- [x] Přidat automatické testy migrací (zatím bez potvrzeného spuštění).
+- [ ] Spustit testy migrací a ověřit obnovu/zálohu na reálné kopii uživatelských dat.
 - [ ] Zachovat `pamet.db` a oddělit dlouhodobou paměť od historie.
 - [ ] Přidat trvalé ukládání konverzací a zpráv se stabilními ID.
 - [ ] Připojit konverzace k projektům a ověřovat přístup ke zdrojům na serveru.
