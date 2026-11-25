@@ -121,3 +121,55 @@ Tato část je plánem, nikoli potvrzením implementace. Jednotlivé integrace a
 2. Změny připravovat na pracovní větvi, nikoli přímo na `main`.
 3. Neodstraňovat historické soubory bez porovnání a bezpečné archivace.
 4. Po každé etapě zkontrolovat změny a uvést, co bylo skutečně otestováno.
+
+
+## Rozšíření koncepce A–E – schváleno, zatím neimplementováno
+
+Podrobný návrh a srovnání existujících řešení: [docs/ANALYZA_EXISTUJICICH_RESENI.md](docs/ANALYZA_EXISTUJICICH_RESENI.md).
+
+### A. Pracovní poznámky a znalostní báze
+- [ ] Oddělit přílohy jednotlivých chatů od trvalých projektových dokumentů.
+- [ ] Přidat samostatné editovatelné pracovní poznámky.
+- [ ] Přidat vyhledávání, připínání, historii verzí a export poznámek.
+- [ ] Připojovat poznámky a zdroje ke konkrétním konverzacím.
+- [ ] Navrhnout projektovou znalostní bázi / RAG s dohledatelnými zdroji.
+- [ ] Zachovat oddělení poznámek, dokumentů, historie a dlouhodobé paměti.
+
+### B. Profily AI a pracovní role
+- [ ] Zavést modelově nezávislé profily s instrukcemi a popisem role.
+- [ ] Umožnit přiřadit profilu kompatibilní model a povolené nástroje.
+- [ ] Oddělit profilové instrukce od bezpečnostních oprávnění.
+- [ ] Přidat správu verzí profilů a zobrazení aktivního profilu/modelu.
+
+### C. Schvalovací centrum
+- [ ] Zavést centrální evidenci žádostí o schválení operací.
+- [ ] Zobrazit přesné argumenty, důvod, dotčené soubory a diff.
+- [ ] Podporovat schválit, zamítnout a bezpečně upravitelnou žádost.
+- [ ] Vázat schválení na přesný obsah operace a znovu ověřovat oprávnění.
+- [ ] Zaznamenávat návrh, rozhodnutí, provedení a výsledek.
+- [ ] Zajistit, že model nemůže schválit vlastní operaci.
+
+### D. Větvení konverzací
+- [ ] Zavést trvalou historii konverzací a zpráv se stabilními ID.
+- [ ] Navrhnout datový model větví a rodičovských zpráv.
+- [ ] Umožnit vytvořit větev od vybrané zprávy bez změny originálu.
+- [ ] Zachovat správný kontext a jasně řešit přenos příloh a zdrojů.
+- [ ] Přidat přepínání a porovnání větví.
+
+### E. Přehled úloh a běžících operací
+- [ ] Zavést persistentní evidenci úloh a jejich událostí.
+- [ ] Zobrazovat stav, průběh, použitý model/profil a výsledek.
+- [ ] Podporovat čekání na schválení a doplňující vstup.
+- [ ] Přidat bezpečné požádání o zastavení a potvrzení konečného stavu.
+- [ ] Ošetřit restart aplikace a nejednoznačný výsledek bez automatického opakování vedlejších účinků.
+- [ ] Zajistit ochranu proti nechtěnému dvojímu spuštění.
+
+### Společné technické předpoklady
+- [ ] Oddělit historii konverzací od dlouhodobé osobní paměti.
+- [ ] Propojit konverzace a zprávy s projekty.
+- [ ] Navrhnout verzované databázové migrace.
+- [ ] Zavést centrální serverovou kontrolu oprávnění pro nástroje.
+- [ ] Připravit auditní záznamy důležitých operací.
+- [ ] Ověřit základní automatické testy před implementací nových agentních schopností.
+
+Pořadí implementace se řídí dokumentem `docs/ANALYZA_EXISTUJICICH_RESENI.md`. Všechny položky jsou plánované; jejich zaškrtnutí bude vyžadovat skutečnou implementaci a odpovídající ověření.
