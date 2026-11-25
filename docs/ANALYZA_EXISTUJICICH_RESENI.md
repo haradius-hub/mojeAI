@@ -420,3 +420,36 @@ Kontrola souborů ve větvi `cleanup/repository-audit` ukázala následující s
 5. Zavést trvalou evidenci úloh před delšími agentními a vícemodelovými běhy.
 
 Tato zjištění potvrzují, že A–E je vhodné navrhovat společně. Neznamenají však, že se má všech pět oblastí implementovat současně.
+
+
+## 10. Podrobný audit databází a návrh společného datového modelu
+
+Byly znovu prohlédnuty soubory `config.py`, `app.py`, `routes/__init__.py`, `routes/chat.py`, `routes/memory.py`, `routes/projects.py`, `routes/config.py`, `core/memory.py`, `core/projects.py`, `static/app.js`, `templates/index.html` a `README.md`.
+
+### Potvrzený stav
+
+- Relační evidence projektů je v `data/projects.db`; inicializace vytváří tabulky `projects` a `project_folders`.
+- Sémantická paměť je v `data/pamet.db`; tabulka `pamet` obsahuje ID, text, zdroj, čas a embedding. Textové kopie se ukládají také do `pamet/`.
+- Chatová routa ukládá otázku a odpověď do paměti; při internetovém vyhledávání ukládá i dotaz a výsledek vyhledávání.
+- Frontend přidává zprávy do aktuálního DOM. V kontrolovaném kódu nebylo nalezeno ukládání historie do databáze ani její načítání po obnovení stránky.
+- Projektové API je registrováno, ale chatový požadavek nemá vazbu na projekt.
+- `project_folders` eviduje oprávnění, ale chat nemá nástrojovou vrstvu, která by z nich umožňovala bezpečně číst nebo zapisovat soubory.
+- Prohlédnuté databázové inicializace používají `CREATE TABLE IF NOT EXISTS`; nebyl nalezen verzovaný migrační mechanismus.
+- Konfigurace a API klíče jsou ukládány mimo tyto databáze.
+
+### Dopad
+
+Nesmíme považovat současnou sémantickou paměť za historii. Její dosavadní záznamy se nesmějí ztratit, ale budoucí běžné chatové zprávy se mají ukládat do samostatné historie. Paměť bude sloužit pouze pro skutečné dlouhodobé vzpomínky a jejich sémantické vyhledávání.
+
+### Nový návrh
+
+Podrobný návrh tabulek, vazeb, rozsahů, migrací a etap je v samostatném dokumentu [docs/DATOVY_MODEL.md](DATOVY_MODEL.md).
+
+Základní rozhodnutí:
+1. Zavést jednu hlavní relační databázi `data/mojeai.db` pro projekty, konverzace, zprávy, poznámky, profily, schvalování, úlohy a audit.
+2. Stávající `data/pamet.db` dočasně zachovat jako samostatnou sémantickou paměť; migraci odložit do samostatné ověřené etapy.
+3. Při migraci převést `projects.db` do hlavní databáze a původní soubor ponechat jako zálohu.
+4. Historii a větvení založit na stabilních ID zpráv a rodičovských vazbách bez kopírování společných předků.
+5. Zajistit verzované migrace, serverové kontroly oprávnění, transakce a automatické testy před změnou uživatelských dat.
+
+Jde o návrh po statické kontrole. Nebyl změněn aplikační kód, databáze ani runtime chování a nebyly provedeny automatické či uživatelské testy.
