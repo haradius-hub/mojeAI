@@ -255,3 +255,20 @@ Pořadí se může po testech upravit. Bez schvalovací vrstvy se nesmí zapnout
 ---
 
 **Závěr auditu:** nejbezpečnější cesta je jedna hlavní relační databáze pro projekty a nové provozní entity, zatímco současná sémantická paměť zůstane oddělená, dokud nebude připravená a otestovaná její migrace. Nejdříve se oddělí historie od paměti; teprve potom se na ni navážou A–E.
+
+
+## 9. Stav první implementační etapy
+
+Dne 25. 11. 2026 byla na pracovní větvi `cleanup/repository-audit` implementována pouze první část databázového základu:
+
+- Nový modul `core/database.py` poskytuje připojení k hlavní SQLite databázi a verzované migrace.
+- `data/mojeai.db` je nyní hlavní databází pro projektové záznamy.
+- Migrace 1 vytváří tabulky `projects`, `project_folders` a index.
+- Migrace 2 importuje existující projekty a povolené složky z `data/projects.db`, zachovává původní číselná ID a otevírá zdrojovou databázi pouze pro čtení.
+- Zdrojová `projects.db` se nemaže ani nepřepisuje.
+- `ProjectManager` používá hlavní databázi; dosavadní API projektů zůstává beze změny.
+- Přidány testy pro čistou instalaci, import projektů a složek, zachování zdroje, opakované spuštění migrace, odmítnutí nekompatibilního schématu a základní CRUD.
+
+**Co zatím implementováno není:** historie konverzací, zprávy, projektové vazby chatů, poznámky, znalostní zdroje, profily, schvalování, úlohy, auditní události ani větvení. Tabulky pro tyto funkce se budou přidávat v dalších samostatných migracích.
+
+**Ověření:** zdrojové soubory a testy byly staticky zkontrolovány. Automatické testy nebylo možné v tomto pracovním prostředí spustit, protože nebylo dostupné připojení ke GitHubu pro stažení pracovní větve. Skutečná migrace uživatelovy databáze nebyla spuštěna. Původní data se proto zatím nijak nezměnila.
