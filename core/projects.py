@@ -8,6 +8,7 @@ import os
 import sqlite3
 from datetime import datetime, timezone
 from config import Config
+from core.database import DatabaseManager
 
 
 class ProjectError(ValueError):
@@ -15,40 +16,27 @@ class ProjectError(ValueError):
 
 
 class ProjectManager:
-    def __init__(self):
-        self.db_path = os.path.join(Config.DATA_DIR, "projects.db")
+    def __init__(self, db_path=None, legacy_db_path=None):
+        data_dir = Config.DATA_DIR
+        self.db_path = os.path.abspath(
+            db_path or os.path.join(data_dir, "mojeai.db")
+        )
+        self.legacy_db_path = os.path.abspath(
+            legacy_db_path or os.path.join(data_dir, "projects.db")
+        )
 
     def init(self):
-        os.makedirs(Config.DATA_DIR, exist_ok=True)
-        with self._connect() as db:
-            db.executescript("""
-                CREATE TABLE IF NOT EXISTS projects (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL COLLATE NOCASE UNIQUE,
-                    description TEXT NOT NULL DEFAULT '',
-                    instructions TEXT NOT NULL DEFAULT '',
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                );
-
-                CREATE TABLE IF NOT EXISTS project_folders (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    project_id INTEGER NOT NULL,
-                    path TEXT NOT NULL,
-                    access TEXT NOT NULL CHECK(access IN ('read', 'read_write')),
-                    added_at TEXT NOT NULL,
-                    UNIQUE(project_id, path),
-                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
-                );
-
-                CREATE INDEX IF NOT EXISTS idx_project_folders_project
-                ON project_folders(project_id);
-            """)
+        os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+        DatabaseManager(
+            self.db_path,
+            legacy_projects_path=self.legacy_db_path,
+        ).initialize()
 
     def _connect(self):
         db = sqlite3.connect(self.db_path, timeout=10)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys = ON")
+        db.execute("PRAGMA busy_timeout = 10000")
         return db
 
     @staticmethod
