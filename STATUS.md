@@ -62,7 +62,9 @@ Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovano
 - Migrace jsou evidovány v tabulce `schema_migrations`; každá změna schématu/import je provedena v transakci.
 - `data/pamet.db` a soubory ve složce `pamet/` zůstávají mimo tuto migraci a nejsou upravovány.
 - Přidány automatické testy migrace: čistá databáze, zachování dat, opakované spuštění, odmítnutí vadného schématu a CRUD projektů.
-- Testy byly přidány, ale jejich spuštění zatím nebylo v tomto pracovním prostředí potvrzeno.
+- Migrace 3 vytváří tabulky `conversations`, `messages` a `attachments` včetně indexů a omezení rodičovské zprávy na stejnou konverzaci.
+- Tabulka `attachments` eviduje více příloh u jedné zprávy (název, úložnou cestu, MIME typ, velikost, SHA-256 a čas); binární ukládání souborů ani upload API zatím nejsou implementovány.
+- Testy migrací 1–3 a vztahů historie byly doplněny, ale nové testy migrace 3 zatím nebyly spuštěny v runtime.
 
 ## Co není implementováno
 
