@@ -41,7 +41,9 @@ class ChatApiHistoryTests(unittest.TestCase):
         self.db_path = os.path.join(self.temp_dir.name, "mojeai.db")
         DatabaseManager(self.db_path).initialize()
         self.original_db_path = chat_route.conversation_manager.db_path
+        self.original_data_dir = chat_route.Config.DATA_DIR
         chat_route.conversation_manager.db_path = self.db_path
+        chat_route.Config.DATA_DIR = self.temp_dir.name
 
         self.app = Flask(__name__)
         self.app.register_blueprint(chat_bp)
@@ -70,6 +72,7 @@ class ChatApiHistoryTests(unittest.TestCase):
         self.memory_search_patch.stop()
         self.config_patch.stop()
         chat_route.conversation_manager.db_path = self.original_db_path
+        chat_route.Config.DATA_DIR = self.original_data_dir
         self.temp_dir.cleanup()
 
     def test_first_and_followup_requests_are_saved_as_one_message_chain(self):
@@ -176,6 +179,86 @@ class ChatApiHistoryTests(unittest.TestCase):
         self.assertIn("OBSAH NAHRANÉHO SOUBORU", prompt)
         self.assertIn("function prepocet(g)", prompt)
         self.assertIn("Kalkulačka", prompt)
+
+
+    def test_followup_prompt_contains_previous_user_and_assistant_messages(self):
+        with patch.object(
+            chat_route.Providers, "generuj",
+            side_effect=["Pamatuji si soubor.", "Navazuji na předchozí odpověď."],
+        ) as generate:
+            first = self.client.post(
+                "/api/chat", json={"dotaz": "Řešíme výrobu mýdla.", "model": "gemini"}
+            )
+            conversation_id = first.get_json()["conversation_id"]
+            second = self.client.post(
+                "/api/chat",
+                json={
+                    "dotaz": "Jaké množství oleje jsme řešili?",
+                    "model": "gemini",
+                    "conversation_id": conversation_id,
+                },
+            )
+        self.assertEqual(second.status_code, 200)
+        second_prompt = generate.call_args_list[1].args[0]
+        self.assertIn("Řešíme výrobu mýdla.", second_prompt)
+        self.assertIn("Pamatuji si soubor.", second_prompt)
+        self.assertIn("PŘEDCHOZÍ PRŮBĚH KONVERZACE", second_prompt)
+
+    def test_uploaded_file_is_persisted_and_linked_to_user_message(self):
+        html_source = "<html><body><h1>Trvalý soubor</h1></body></html>"
+        with patch.object(
+            chat_route.Providers, "generuj", return_value="Soubor přečten."
+        ):
+            response = self.client.post(
+                "/api/chat",
+                data={
+                    "dotaz": "Zapamatuj si tento soubor",
+                    "model": "gemini",
+                    "file": (io.BytesIO(html_source.encode("utf-8")), "poznamky.html"),
+                },
+                content_type="multipart/form-data",
+            )
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        conversation = chat_route.conversation_manager.get_conversation(
+            data["conversation_id"]
+        )
+        attachment = conversation["messages"][0]["attachments"][0]
+        stored_path = os.path.join(
+            chat_route.Config.DATA_DIR, attachment["storage_path"]
+        )
+        self.assertTrue(os.path.isfile(stored_path))
+        with open(stored_path, "r", encoding="utf-8") as stored:
+            self.assertIn("Trvalý soubor", stored.read())
+
+    def test_conversation_list_pin_and_reorder_endpoints(self):
+        with patch.object(
+            chat_route.Providers, "generuj",
+            side_effect=["Odpověď A", "Odpověď B", "Odpověď C"],
+        ):
+            ids = []
+            for question in ["Chléb", "Parfémy", "Servery"]:
+                response = self.client.post(
+                    "/api/chat", json={"dotaz": question, "model": "gemini"}
+                )
+                ids.append(response.get_json()["conversation_id"])
+
+        for conversation_id in ids:
+            response = self.client.post(
+                f"/api/conversations/{conversation_id}/pin",
+                json={"pinned": True},
+            )
+            self.assertEqual(response.status_code, 200)
+
+        self.client.post(
+            "/api/conversations/pinned-order",
+            json={"conversation_ids": [ids[1], ids[2], ids[0]]},
+        )
+        listed = self.client.get("/api/conversations").get_json()["conversations"]
+        self.assertEqual([item["id"] for item in listed[:3]], [ids[1], ids[2], ids[0]])
+        self.assertEqual(self.client.get(
+            f"/api/conversations/{ids[1]}"
+        ).status_code, 200)
 
 
 if __name__ == "__main__":
