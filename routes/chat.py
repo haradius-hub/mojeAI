@@ -265,7 +265,7 @@ def chat():
         if len(text_ze_souboru) > file_budget:
             text_ze_souboru = (
                 text_ze_souboru[:file_budget]
-                + "\\n[Obsah souboru byl zkrácen podle velikosti kontextu lokálního modelu.]"
+                + "\n[Obsah souboru byl zkrácen podle velikosti kontextu lokálního modelu.]"
             )
     historie_info = _build_history_context(previous_messages, history_budget)
     soubor_info = (
