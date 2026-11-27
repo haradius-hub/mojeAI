@@ -85,6 +85,7 @@ Stávající projektová data se zachovají. Projektová oprávnění se budou o
 **conversations**
 - `id`, `project_id` (NULL znamená osobní/globální prostor)
 - `title`, `created_at`, `updated_at`, `archived_at`
+- `is_pinned`, `pin_order` – uživatelské připnutí a stabilní pořadí; aktivita konverzace pořadí připnutých položek nemění
 
 **conversation_branches**
 - `id`, `conversation_id`, `name`
@@ -110,7 +111,7 @@ Přesné omezení a indexy rodičovských vazeb se musí ověřit automatickými
 - `storage_path`, `mime_type`, `size_bytes`, `sha256`
 - `created_at`
 
-Metadata přílohy se oddělí od obsahu souboru. Samotný soubor se nebude bezdůvodně kopírovat do databáze. Při větvení bude výslovně určeno, zda se příloha dědí z původní zprávy.
+Metadata přílohy se oddělí od obsahu souboru. Samotný soubor se ukládá mimo databázi do spravovaného úložiště data/uploads/<conversation_id>/; databáze uchovává relativní cestu, MIME typ, velikost a SHA-256. Aktuální upload limit je 25 MB na soubor. Při větvení bude výslovně určeno, zda se příloha dědí z původní zprávy.
 
 **knowledge_sources**
 - `id`, `project_id` (NULL pro osobní zdroj), `kind`
@@ -272,3 +273,16 @@ Dne 25. 11. 2026 byla na pracovní větvi `cleanup/repository-audit` implementov
 **Co zatím implementováno není:** historie konverzací, zprávy, projektové vazby chatů, poznámky, znalostní zdroje, profily, schvalování, úlohy, auditní události ani větvení. Tabulky pro tyto funkce se budou přidávat v dalších samostatných migracích.
 
 **Ověření:** zdrojové soubory a testy byly staticky zkontrolovány. Automatické testy nebylo možné v tomto pracovním prostředí spustit, protože nebylo dostupné připojení ke GitHubu pro stažení pracovní větve. Skutečná migrace uživatelovy databáze nebyla spuštěna. Původní data se proto zatím nijak nezměnila.
+
+
+## 9. Implementovaný stav historie a připínání (27. 11. 2026)
+
+- Migrace 4 přidává do tabulky conversations sloupce is_pinned a pin_order; existující konverzace zůstávají nepřipnuté a bez pořadí.
+- Seznam konverzací řadí nejprve připnuté podle pin_order, poté ostatní podle updated_at. Aktivita připnutého chatu jeho pořadí nemění.
+- ConversationManager podporuje připnutí, odepinutí, bezpečnou změnu pořadí, vyhledávání podle názvu a obsahu zpráv a načtení omezeného chronologického konce historie.
+- Chat API poskytuje seznam, detail konverzace, připnutí, změnu pořadí a stažení přílohy.
+- Model dostává nejvýše 12 posledních zpráv a omezený textový kontext. Pro lokální modely je limit odvozen od nastavení n_ctx; úplná historie zůstává v databázi.
+- Nahrané podporované dokumenty se ukládají do data/uploads/ a jejich metadata se propojují s uživatelskou zprávou. Starší podporované textové a kancelářské přílohy se při pokračování mohou znovu načíst.
+- UI nabízí výchozí panel Konverzace, přepnutí do Nastavení, nový chat, hledání, otevření historie, připnutí a přetažení připnutých chatů pro změnu pořadí.
+- V API odpovědi konverzace se nezveřejňuje interní úložná cesta ani kontrolní součet přílohy.
+- Automatické testy byly doplněny; jejich lokální runtime výsledek je nutné potvrdit uživatelem.
