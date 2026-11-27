@@ -52,7 +52,7 @@ class DatabaseMigrationTests(unittest.TestCase):
         versions = db.execute(
             "SELECT version FROM schema_migrations ORDER BY version"
         ).fetchall()
-        self.assertEqual(versions, [(1,), (2,), (3,)])
+        self.assertEqual(versions, [(1,), (2,), (3,), (4,)])
         table_names = {
             row[0] for row in db.execute(
                 "SELECT name FROM sqlite_master WHERE type='table'"
@@ -94,7 +94,7 @@ class DatabaseMigrationTests(unittest.TestCase):
         db = sqlite3.connect(self.main_db)
         self.assertEqual(db.execute("SELECT COUNT(*) FROM projects").fetchone()[0], 1)
         self.assertEqual(db.execute("SELECT COUNT(*) FROM project_folders").fetchone()[0], 1)
-        self.assertEqual(db.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0], 3)
+        self.assertEqual(db.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0], 4)
         db.close()
 
     def test_invalid_legacy_schema_is_not_marked_as_migrated(self):
@@ -192,6 +192,32 @@ class DatabaseMigrationTests(unittest.TestCase):
         self.assertEqual(created["name"], "Test project")
         self.assertTrue(os.path.isfile(self.main_db))
         self.assertFalse(os.path.exists(self.legacy_db))
+
+
+    def test_pinning_migration_adds_defaults_without_losing_conversations(self):
+        manager = DatabaseManager(self.main_db, self.legacy_db)
+        manager.initialize()
+        db = manager.connect()
+        try:
+            db.execute("""
+                INSERT INTO conversations (id, title, created_at, updated_at)
+                VALUES ('existing-chat', 'Zachovaný chat', 'now', 'now')
+            """)
+            db.commit()
+            columns = {
+                row["name"] for row in db.execute(
+                    "PRAGMA table_info(conversations)"
+                ).fetchall()
+            }
+            self.assertIn("is_pinned", columns)
+            self.assertIn("pin_order", columns)
+            row = db.execute(
+                "SELECT title, is_pinned, pin_order FROM conversations WHERE id = ?",
+                ("existing-chat",),
+            ).fetchone()
+            self.assertEqual(tuple(row), ("Zachovaný chat", 0, None))
+        finally:
+            db.close()
 
 
 if __name__ == "__main__":
