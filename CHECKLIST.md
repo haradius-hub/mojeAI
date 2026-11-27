@@ -64,7 +64,7 @@ Další pořadí: (1) obrázky PNG, JPG/JPEG a WebP včetně předávání multi
 - [x] Databázová a servisní vrstva historie: vytvoření, výpis, načtení a přidávání zpráv.
 - [x] Napojit chatové API na historii a zachovat návaznost dotaz–odpověď (runtime testy čekají).
 - [x] Předávat ID aktivní konverzace z chatového UI během otevřené stránky.
-- [ ] Přidat UI seznam, vyhledávání a opětovné otevření konverzací.
+- [x] Přidat UI seznam, vyhledávání a opětovné otevření konverzací.
 - [ ] Projektové rozhraní v UI.
 - [ ] Oddělení kontextu a paměti podle projektu.
 - [ ] Skutečné tool/function calling podporované jednotlivými providery.
@@ -190,11 +190,33 @@ Pořadí implementace se řídí dokumentem `docs/ANALYZA_EXISTUJICICH_RESENI.md
 - [ ] Spustit testy migrací a ověřit obnovu/zálohu na reálné kopii uživatelských dat.
 - [ ] Zachovat `pamet.db` a oddělit dlouhodobou paměť od historie.
 - [x] Přidat databázové tabulky konverzací a zpráv se stabilními textovými ID (migrace 3).
-- [x] Připravit metadata příloh navázaná na zprávy, včetně podpory více příloh na jednu zprávu (samotné ukládání souborů zatím není implementováno).
+- [x] Připravit metadata příloh navázaná na zprávy, včetně podpory více příloh na jednu zprávu.
+- [x] Trvale ukládat podporované přílohy do data/uploads a zpřístupnit jejich opětovné načtení/stažení.
 - [x] Napojit chatové API a aktivní chatové UI na trvalou historii (ID se předává během otevřené stránky).
-- [ ] Přidat seznam, vyhledávání a opětovné otevření konverzací.
+- [x] Přidat seznam, vyhledávání a opětovné otevření konverzací.
+- [x] Přidat připínání konverzací s ručně nastavitelným pořadím nezávislým na aktivitě.
+- [x] Přidat omezený kontext předchozích zpráv a opětovné načítání podporovaných příloh.
+- [x] Přidat přepínání levého panelu Konverzace / Nastavení.
+- [x] Opravit kontrolu HTTP a aplikačního statusu při ukládání přepínače internetu.
 - [ ] Připojit konverzace k projektům a ověřovat přístup ke zdrojům na serveru.
-- [x] Uživatelsky spustit databázové a servisní testy historie (13 testů prošlo 27. 11. 2026).
+- [x] Uživatelsky spustit databázové a servisní testy historie (17 testů prošlo 27. 11. 2026).
+- [ ] Spustit rozšířené testy nové etapy (migrace 4, připínání, hledání, kontext a trvalé přílohy).
 - [ ] Spustit nové API testy včetně HTML přílohy.
 
 Podrobný návrh: [docs/DATOVY_MODEL.md](docs/DATOVY_MODEL.md). Návrh zatím nepředstavuje implementaci.
+
+
+### Historie konverzací a připnuté chaty – implementace na pracovní větvi
+
+- [x] Přidat migraci 4 se sloupci is_pinned a pin_order.
+- [x] Řadit připnuté chaty podle ručně určeného pořadí, bez automatického posunu podle aktivity.
+- [x] Umožnit připnutí, odepinutí a změnu pořadí přetažením.
+- [x] Oddělit připnuté chaty od běžného seznamu řazeného podle poslední aktivity.
+- [x] Přidat vyhledávání podle názvu konverzace a obsahu zpráv.
+- [x] Přidat otevření starších konverzací a obnovení jejich zpráv a příloh.
+- [x] Přidat trvalé ukládání příloh do data/uploads.
+- [x] Předávat modelu omezenou historii předchozích zpráv; úplnou historii ponechat v databázi.
+- [x] Přepínat levý panel mezi Konverzace a Nastavení.
+- [ ] Ověřit migraci a nové API/UI na uživatelově Windows portable instalaci.
+- [ ] Ověřit stahování příloh, opětovné načítání souboru do kontextu a chování po restartu.
+- [ ] Ověřit ruční pořadí připnutých chatů po opakovaném spuštění aplikace.
