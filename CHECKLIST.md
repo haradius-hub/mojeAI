@@ -57,7 +57,9 @@ Další pořadí: (1) obrázky PNG, JPG/JPEG a WebP včetně předávání multi
 
 ## Funkce plánované – zatím nejsou hotové
 
-- [ ] Historie konverzací: ukládání, seznam, vyhledávání a opětovné otevření.
+- [x] Databázová a servisní vrstva historie: vytvoření, výpis, načtení a přidávání zpráv (API/UI zatím nejsou napojeny).
+- [ ] Napojit chatové API na historii a zachovat návaznost dotaz–odpověď.
+- [ ] Přidat UI seznam, vyhledávání a opětovné otevření konverzací.
 - [ ] Projektové rozhraní v UI.
 - [ ] Oddělení kontextu a paměti podle projektu.
 - [ ] Skutečné tool/function calling podporované jednotlivými providery.
@@ -150,8 +152,8 @@ Podrobný návrh a srovnání existujících řešení: [docs/ANALYZA_EXISTUJICI
 - [ ] Zajistit, že model nemůže schválit vlastní operaci.
 
 ### D. Větvení konverzací
-- [ ] Zavést trvalou historii konverzací a zpráv se stabilními ID.
-- [ ] Navrhnout datový model větví a rodičovských zpráv.
+- [x] Zavést databázovou historii konverzací a zpráv se stabilními ID a rodičovskými vazbami.
+- [ ] Navrhnout a implementovat plnohodnotné větvení konverzací nad rodičovskými vazbami.
 - [ ] Umožnit vytvořit větev od vybrané zprávy bez změny originálu.
 - [ ] Zachovat správný kontext a jasně řešit přenos příloh a zdrojů.
 - [ ] Přidat přepínání a porovnání větví.
@@ -185,6 +187,6 @@ Pořadí implementace se řídí dokumentem `docs/ANALYZA_EXISTUJICICH_RESENI.md
 - [x] Připravit metadata příloh navázaná na zprávy, včetně podpory více příloh na jednu zprávu (samotné ukládání souborů zatím není implementováno).
 - [ ] Napojit chatové API a UI na trvalou historii; přidat seznam, vyhledávání a opětovné otevření.
 - [ ] Připojit konverzace k projektům a ověřovat přístup ke zdrojům na serveru.
-- [ ] Spustit a ověřit testy rodičovských vazeb zpráv pro budoucí větvení.
+- [ ] Spustit nové testy servisní vrstvy historie a následně testy rodičovských vazeb zpráv.
 
 Podrobný návrh: [docs/DATOVY_MODEL.md](docs/DATOVY_MODEL.md). Návrh zatím nepředstavuje implementaci.
