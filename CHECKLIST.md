@@ -55,10 +55,15 @@ Současné nahrávání v chatovém požadavku podporuje PDF, TXT, MD, PY a CSV.
 
 Další pořadí: (1) obrázky PNG, JPG/JPEG a WebP včetně předávání multimodálním providerům, (2) společné testování všech podporovaných formátů. Kancelářské dokumenty se převádějí na textový kontext; vložené obrázky se zatím neanalyzují.
 
+- [ ] Přidat bezpečné čtení a analýzu HTML souborů `.htm` a `.html`, včetně obsahu, struktury, formulářů a JavaScriptových výpočtů.
+- [ ] Podporovat související projektové soubory `.css` a `.js` a zachovat jejich relativní vazby a složkovou strukturu.
+- [ ] Připravit bezpečný izolovaný náhled/spuštění HTML kalkulaček; nespouštět nedůvěryhodný JavaScript přímo v hlavním rozhraní MojeAI.
+
 ## Funkce plánované – zatím nejsou hotové
 
 - [x] Databázová a servisní vrstva historie: vytvoření, výpis, načtení a přidávání zpráv (API/UI zatím nejsou napojeny).
-- [ ] Napojit chatové API na historii a zachovat návaznost dotaz–odpověď.
+- [x] Napojit chatové API na historii a zachovat návaznost dotaz–odpověď (runtime testy čekají).
+- [x] Předávat ID aktivní konverzace z chatového UI během otevřené stránky.
 - [ ] Přidat UI seznam, vyhledávání a opětovné otevření konverzací.
 - [ ] Projektové rozhraní v UI.
 - [ ] Oddělení kontextu a paměti podle projektu.
@@ -108,6 +113,7 @@ Tato část je plánem, nikoli potvrzením implementace. Jednotlivé integrace a
 
 - [ ] Importní test aplikace v čistém prostředí.
 - [ ] Test vytvoření Flask aplikace a základního endpointu.
+- [ ] Spustit `tests/test_chat_api.py` a ověřit ukládání zpráv, návaznost, chybový stav modelu a odmítnutí neexistující konverzace.
 - [ ] Test ukládání a načítání konfigurace.
 - [ ] Test validace a ukládání API klíčů bez použití skutečných klíčů.
 - [ ] Test paměti s dostupným i chybějícím embedding modelem.
