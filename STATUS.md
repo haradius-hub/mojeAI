@@ -110,3 +110,11 @@ Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovano
 ## Poznámka k ověření
 
 Windows portable aplikaci a připojování složek prakticky ověřil uživatel. Asistent neprováděl samostatný runtime test. Systémový Python, Linuxový launcher, GPU, embedding model a rozšířené formáty souborů zůstávají neověřené.
+
+## Historie konverzací – druhá implementační etapa
+
+- Přidán `core/conversations.py` s oddělenou servisní vrstvou pro vytvoření, výpis, načítání a doplňování konverzací a zpráv.
+- Výpis konverzací podporuje stránkování a počet zpráv; načtení konverzace vrací zprávy i metadata připojených souborů.
+- Validují se role, délky vstupů, stavy zpráv, stránkovací parametry a rodičovské vazby. SQL dotazy používají parametry.
+- Servisní vrstva zatím není napojena na `routes/chat.py` ani UI. Současný chat se tedy stále chová jako dosud a po restartu nemá historii.
+- Přidán `tests/test_conversations.py`; testy zatím nebyly spuštěny v runtime.
