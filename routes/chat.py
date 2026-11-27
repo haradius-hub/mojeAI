@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from config import Config
 from core.memory import memory_manager
 from core.providers import Providers
+from core.conversations import conversation_manager, ConversationError
 from core.file_processing import extract_document_text
 from datetime import datetime
 import requests
@@ -72,6 +73,7 @@ def chat():
         dotaz = request.form.get('dotaz', '')
         model_id = request.form.get('model', 'gemini')
         force_search = request.form.get('force_search') == 'true'
+        conversation_id = request.form.get('conversation_id') or None
         model_info = None  # Cesta modelu se nikdy nepřebírá od klienta.
         nahrany_soubor = request.files.get('file')
     else:
@@ -81,6 +83,7 @@ def chat():
         dotaz = data.get('dotaz', '')
         model_id = data.get('model', 'gemini')
         force_search = data.get('force_search', False)
+        conversation_id = data.get('conversation_id') or None
         model_info = None  # Cesta modelu se nikdy nepřebírá od klienta.
         nahrany_soubor = None
 
@@ -90,6 +93,11 @@ def chat():
         return jsonify({'odpoved': 'Neplatný identifikátor modelu.'}), 400
     if not isinstance(force_search, bool):
         return jsonify({'odpoved': 'Neplatná hodnota force_search.'}), 400
+    if conversation_id is not None and (
+        not isinstance(conversation_id, str) or not conversation_id.strip()
+        or len(conversation_id) > 128
+    ):
+        return jsonify({'odpoved': 'Neplatné ID konverzace.'}), 400
     if not dotaz and not nahrany_soubor:
         return jsonify({'odpoved': 'Prosim napis otazku nebo nahraj soubor.'})
 
@@ -164,8 +172,68 @@ PAMET:
 OTAZKA: {dotaz}
 ODPOVED:"""
     
+    # Historie je oddělena od dlouhodobé paměti. Uživatelova zpráva se uloží
+    # ještě před voláním modelu, aby při jeho chybě nezmizel původní dotaz.
+    try:
+        if conversation_id:
+            conversation_manager.get_conversation(conversation_id, include_messages=False)
+        else:
+            nazev = (dotaz.strip() or (nahrany_soubor.filename if nahrany_soubor else "Nová konverzace"))[:200]
+            conversation = conversation_manager.create_conversation(title=nazev)
+            conversation_id = conversation["id"]
+
+        provider = (
+            "ollama" if model_id.startswith("ollama/")
+            else "local" if model_id.startswith("lokalni_")
+            else model_id
+        )
+        user_message = conversation_manager.add_message(
+            conversation_id, "user", dotaz, provider=provider, model=model_id
+        )
+    except ConversationError as e:
+        return jsonify({'odpoved': str(e)}), 400
+    except Exception as e:
+        print(f"[CHYBA] Uložení uživatelské zprávy do historie selhalo: {type(e).__name__}: {e}")
+        return jsonify({'odpoved': 'Zprávu se nepodařilo bezpečně uložit do historie. Model nebyl spuštěn.'}), 500
+
     memory_manager.uloz(f"Otazka: {dotaz}", zdroj="dotaz")
-    odpoved = Providers.generuj(prompt, model_id)
+    zacatek_generovani = datetime.now()
+    try:
+        odpoved = Providers.generuj(prompt, model_id)
+        if not isinstance(odpoved, str):
+            odpoved = str(odpoved)
+        failed = odpoved.lstrip().startswith("❌")
+        error_code = "provider_error" if failed else None
+        status = "failed" if failed else "completed"
+    except Exception as e:
+        print(f"[CHYBA] Generování odpovědi selhalo: {type(e).__name__}: {e}")
+        odpoved = f"❌ Chyba při generování odpovědi ({type(e).__name__}). Uživatelský dotaz byl uložen."
+        status = "failed"
+        error_code = type(e).__name__[:200]
+
+    duration_ms = max(0, int((datetime.now() - zacatek_generovani).total_seconds() * 1000))
+    try:
+        assistant_message = conversation_manager.add_message(
+            conversation_id, "assistant", odpoved,
+            parent_message_id=user_message["id"], provider=provider,
+            model=model_id, status=status, error_code=error_code,
+            duration_ms=duration_ms
+        )
+    except Exception as e:
+        print(f"[CHYBA] Uložení odpovědi do historie selhalo: {type(e).__name__}: {e}")
+        return jsonify({
+            'odpoved': odpoved,
+            'conversation_id': conversation_id,
+            'user_message_id': user_message["id"],
+            'historie_chyba': 'Odpověď se nepodařilo uložit do historie.'
+        }), 500
+
     memory_manager.uloz(f"Odpoved: {odpoved}", zdroj="odpoved")
-    
-    return jsonify({'odpoved': odpoved})
+
+    return jsonify({
+        'odpoved': odpoved,
+        'conversation_id': conversation_id,
+        'user_message_id': user_message["id"],
+        'assistant_message_id': assistant_message["id"],
+        'status': status
+    })
