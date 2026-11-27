@@ -269,7 +269,7 @@ def chat():
             )
     historie_info = _build_history_context(previous_messages, history_budget)
     soubor_info = (
-        f"\nOBSAH AKTUÁLNĚ NAHRANÉHO SOUBORU:\n{text_ze_souboru}\n"
+        f"\nOBSAH NAHRANÉHO SOUBORU:\n{text_ze_souboru}\n"
         if text_ze_souboru else ""
     )
 
