@@ -330,6 +330,7 @@ function formatVelikostiSouboru(bytes) {
 function ikonaPrilohy(pripona) {
     const ikony = {
         '.pdf': '📕', '.docx': '📘', '.odt': '📘',
+        '.htm': '🌐', '.html': '🌐', '.css': '🎨', '.js': '📜',
         '.xlsx': '📗', '.ods': '📗', '.csv': '📊',
         '.pptx': '📙', '.odp': '📙',
         '.py': '🐍', '.md': '📝', '.txt': '📄'
