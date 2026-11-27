@@ -451,11 +451,12 @@ async function poslatDotaz() {
             body: formData
         });
         const data = await res.json();
+        // I při chybě ukládání odpovědi může být uživatelská zpráva už uložena.
+        // Zachováme proto ID konverzace i pro případné pokračování.
+        if (data.conversation_id) aktivniKonverzaceId = data.conversation_id;
         if (!res.ok) {
             throw new Error(data.odpoved || `Server vrátil chybu HTTP ${res.status}`);
         }
-
-        if (data.conversation_id) aktivniKonverzaceId = data.conversation_id;
 
         // Zpracování odpovědi - barevné odlišení přemýšlení
         let htmlOdpoved = marked.parse(data.odpoved);
