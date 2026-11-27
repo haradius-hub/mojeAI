@@ -12,7 +12,7 @@ class DatabaseMigrationError(RuntimeError):
 
 
 class DatabaseManager:
-    CURRENT_VERSION = 3
+    CURRENT_VERSION = 4
 
     def __init__(self, db_path, legacy_projects_path=None):
         self.db_path = os.path.abspath(db_path)
@@ -63,6 +63,9 @@ class DatabaseManager:
 
             if 3 not in applied:
                 self._migrate_conversation_history(db)
+
+            if 4 not in applied:
+                self._migrate_conversation_pins(db)
         except Exception:
             db.rollback()
             raise
@@ -267,6 +270,38 @@ class DatabaseManager:
             self._record_migration(
                 db, 3, "conversation_history_and_attachments",
                 "Created persistent conversations, messages and attachment metadata."
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+
+
+    def _migrate_conversation_pins(self, db):
+        """Add stable user-controlled pinning and ordering to conversations."""
+        try:
+            db.execute("BEGIN IMMEDIATE")
+            columns = {
+                row["name"] for row in db.execute(
+                    "PRAGMA table_info(conversations)"
+                ).fetchall()
+            }
+            if "is_pinned" not in columns:
+                db.execute(
+                    "ALTER TABLE conversations ADD COLUMN is_pinned INTEGER NOT NULL DEFAULT 0 "
+                    "CHECK(is_pinned IN (0, 1))"
+                )
+            if "pin_order" not in columns:
+                db.execute(
+                    "ALTER TABLE conversations ADD COLUMN pin_order INTEGER"
+                )
+            db.execute("""
+                CREATE INDEX IF NOT EXISTS idx_conversations_pinned_order
+                ON conversations(is_pinned DESC, pin_order ASC, updated_at DESC)
+            """)
+            self._record_migration(
+                db, 4, "conversation_pinning",
+                "Added user-controlled pinned state and stable pin order."
             )
             db.commit()
         except Exception:
