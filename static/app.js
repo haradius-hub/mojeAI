@@ -218,7 +218,8 @@ async function ulozInternet() {
         }
         zobrazToast(povolen ? '✅ Internet povolen' : 'Internet zakázán');
     } catch (e) {
-        zobrazToast('❌ Chyba', true);
+        document.getElementById('internetPovolen').checked = !povolen;
+        zobrazToast('❌ Internet se nepodařilo uložit: ' + e.message, true);
     }
 }
 
