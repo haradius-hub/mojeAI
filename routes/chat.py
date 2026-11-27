@@ -256,10 +256,17 @@ def chat():
 
     history_budget = MAX_HISTORY_CHARS
     if model_id.startswith(("ollama/", "lokalni_")):
-        history_budget = min(
-            MAX_HISTORY_CHARS,
-            max(4000, int(config.get("n_ctx", 2048)) * 2),
-        )
+        try:
+            local_context_size = max(512, int(config.get("n_ctx", 2048)))
+        except (TypeError, ValueError):
+            local_context_size = 2048
+        history_budget = min(MAX_HISTORY_CHARS, local_context_size)
+        file_budget = min(100000, local_context_size * 2)
+        if len(text_ze_souboru) > file_budget:
+            text_ze_souboru = (
+                text_ze_souboru[:file_budget]
+                + "\\n[Obsah souboru byl zkrácen podle velikosti kontextu lokálního modelu.]"
+            )
     historie_info = _build_history_context(previous_messages, history_budget)
     soubor_info = (
         f"\nOBSAH AKTUÁLNĚ NAHRANÉHO SOUBORU:\n{text_ze_souboru}\n"
