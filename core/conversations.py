@@ -154,7 +154,7 @@ class ConversationManager:
         duration_ms=None, usage_json=None,
     ):
         conversation_id = self._validate_id(conversation_id, "konverzace")
-        if role not in {"system", "user", "assistant", "tool"}:
+        if not isinstance(role, str) or role not in {"system", "user", "assistant", "tool"}:
             raise ConversationError("Neplatná role zprávy.")
         content = self._validate_text(content, "obsah zprávy", 200000, True)
         if parent_message_id is not None:
