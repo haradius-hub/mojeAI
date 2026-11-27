@@ -183,7 +183,7 @@ Podrobný návrh a srovnání existujících řešení: [docs/ANALYZA_EXISTUJICI
 Pořadí implementace se řídí dokumentem `docs/ANALYZA_EXISTUJICICH_RESENI.md`. Všechny položky jsou plánované; jejich zaškrtnutí bude vyžadovat skutečnou implementaci a odpovídající ověření.
 
 
-### Datový základ – návrh po auditu, zatím neimplementováno
+### Datový základ – implementace a zbývající úkoly
 - [x] Zavést hlavní relační databázi `data/mojeai.db` a verzování schématu pro projektové tabulky.
 - [x] Připravit transakční migraci projektů a povolených složek z `projects.db`; zdrojová databáze se otevírá pouze pro čtení a nemaže se.
 - [x] Přidat automatické testy migrací (zatím bez potvrzeného spuštění).
