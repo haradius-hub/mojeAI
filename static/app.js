@@ -1,6 +1,8 @@
 let aktualniModel = '';
 let dostupneModely = [];
 let vybranySoubor = null;
+// ID aktuální konverzace; po obnovení stránky se zatím začne nový chat.
+let aktivniKonverzaceId = null;
 
 function zobrazToast(zprava, error = false) {
     const toast = document.getElementById('toast');
@@ -425,6 +427,7 @@ async function poslatDotaz() {
     formData.append('dotaz', dotaz);
     formData.append('model', model);
     formData.append('force_search', force_search);
+    if (aktivniKonverzaceId) formData.append('conversation_id', aktivniKonverzaceId);
     if (souborKOdeslani) formData.append('file', souborKOdeslani);
 
     vybranySoubor = null;
@@ -447,6 +450,8 @@ async function poslatDotaz() {
         if (!res.ok) {
             throw new Error(data.odpoved || `Server vrátil chybu HTTP ${res.status}`);
         }
+
+        if (data.conversation_id) aktivniKonverzaceId = data.conversation_id;
 
         // Zpracování odpovědi - barevné odlišení přemýšlení
         let htmlOdpoved = marked.parse(data.odpoved);
