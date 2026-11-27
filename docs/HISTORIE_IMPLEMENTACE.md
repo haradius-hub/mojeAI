@@ -1,6 +1,6 @@
 # Historie konverzací – první databázová etapa
 
-**Stav:** databázové schéma implementováno; API, UI a runtime testy zatím ne  
+**Stav:** databázové schéma implementováno; API je napojeno, uživatelská historie a runtime API testy čekají  
 **Větev:** `cleanup/repository-audit`  
 **Migrace:** 3
 
@@ -49,7 +49,7 @@ python -m unittest discover -s tests -v
 
 ## Druhá implementační etapa – úložiště konverzací
 
-**Stav:** servisní vrstva přidána; API/UI a runtime testy čekají.
+**Stav:** servisní vrstva přidána; API napojeno ve třetí etapě, uživatelská historie a runtime API testy čekají.
 
 Nový modul `core/conversations.py` poskytuje:
 - vytvoření konverzace s volitelným projektem;
@@ -75,5 +75,6 @@ Nové testy v `tests/test_conversations.py` pokrývají vytvoření a načtení 
 - Chatové UI předává vrácené ID při dalších zprávách v rámci aktuálně otevřené stránky. Po obnovení stránky zatím neumí načíst historii ani znovuotevřít dřívější konverzaci.
 - Stávající dlouhodobá paměť zůstává beze změny a oddělená od historie.
 - Binární přílohy ani jejich metadata se v této etapě do historie neukládají; jejich trvalé úložiště a vícesouborový upload zůstávají samostatným úkolem.
+- Příjem `.htm`, `.html`, `.css` a `.js` je doplněn do stávajícího uploadu. Obsah se předává modelu jako text pro analýzu; kód se nevykonává. Souběžná analýza více souborů a izolovaný náhled/spuštění HTML aplikace zůstávají plánované.
 - Přidán `tests/test_chat_api.py` pro první/ navazující zprávu, chybu modelu a neexistující ID. Testy zatím nebyly spuštěny v runtime.
 
