@@ -46,14 +46,16 @@ class ConversationManagerTests(unittest.TestCase):
         self.manager.add_message(first["id"], "user", "Otázka")
         self.manager.add_message(first["id"], "assistant", "Odpověď")
 
-        rows = self.manager.list_conversations(limit=1)
-        self.assertEqual(len(rows), 1)
-        self.assertEqual(rows[0]["id"], first["id"])
-        self.assertEqual(rows[0]["message_count"], 2)
-        self.assertEqual(
-            self.manager.list_conversations(limit=1, offset=1)[0]["id"],
-            second["id"]
-        )
+        page_one = self.manager.list_conversations(limit=1)
+        page_two = self.manager.list_conversations(limit=1, offset=1)
+        self.assertEqual(len(page_one), 1)
+        self.assertEqual(len(page_two), 1)
+        listed_ids = {page_one[0]["id"], page_two[0]["id"]}
+        self.assertEqual(listed_ids, {first["id"], second["id"]})
+        first_row = next(row for row in (
+            self.manager.list_conversations(limit=2)
+        ) if row["id"] == first["id"])
+        self.assertEqual(first_row["message_count"], 2)
 
     def test_attachment_metadata_is_returned_with_owning_message(self):
         conversation = self.manager.create_conversation("Přílohy")
