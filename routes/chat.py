@@ -106,7 +106,7 @@ def chat():
         puvodni_nazev = secure_filename(nahrany_soubor.filename or '')
         pripona = os.path.splitext(puvodni_nazev)[1].lower()
         povolene_pripony = {
-            '.pdf', '.txt', '.md', '.py', '.csv',
+            '.pdf', '.txt', '.md', '.py', '.csv', '.htm', '.html', '.css', '.js',
             '.docx', '.xlsx', '.pptx', '.odt', '.ods', '.odp'
         }
         if pripona not in povolene_pripony:
