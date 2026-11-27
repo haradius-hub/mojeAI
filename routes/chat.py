@@ -175,8 +175,12 @@ ODPOVED:"""
     # Historie je oddělena od dlouhodobé paměti. Uživatelova zpráva se uloží
     # ještě před voláním modelu, aby při jeho chybě nezmizel původní dotaz.
     try:
+        parent_message_id = None
         if conversation_id:
-            conversation_manager.get_conversation(conversation_id, include_messages=False)
+            existing = conversation_manager.get_conversation(conversation_id, include_messages=True)
+            previous_messages = existing.get("messages", [])
+            if previous_messages and previous_messages[-1].get("role") == "assistant":
+                parent_message_id = previous_messages[-1]["id"]
         else:
             nazev = (dotaz.strip() or (nahrany_soubor.filename if nahrany_soubor else "Nová konverzace"))[:200]
             conversation = conversation_manager.create_conversation(title=nazev)
@@ -188,7 +192,8 @@ ODPOVED:"""
             else model_id
         )
         user_message = conversation_manager.add_message(
-            conversation_id, "user", dotaz, provider=provider, model=model_id
+            conversation_id, "user", dotaz, parent_message_id=parent_message_id,
+            provider=provider, model=model_id
         )
     except ConversationError as e:
         return jsonify({'odpoved': str(e)}), 400
