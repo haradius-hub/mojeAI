@@ -17,7 +17,7 @@ Dlouhodobým cílem je osobní AI pracovní prostředí s historií, dlouhodobou
 - Lokální GGUF modely přes `llama-cpp-python`.
 - Připojení k lokálnímu API Ollamy a načtení seznamu modelů.
 - Základní internetové vyhledávání a získání počasí.
-- Přijetí PDF, TXT, MD, PY, CSV, DOCX, XLSX, PPTX, ODT, ODS a ODP do konkrétního chatového požadavku. CSV zůstává podporováno; nové kancelářské formáty se extrahují do textového kontextu.
+- Přijetí PDF, TXT, MD, PY, CSV, HTM/HTML, CSS, JS, DOCX, XLSX, PPTX, ODT, ODS a ODP do konkrétního chatového požadavku. CSV zůstává podporováno; nové kancelářské formáty se extrahují do textového kontextu.
 - Výběr souboru zobrazuje před odesláním kartu s názvem, typem a velikostí; přílohu lze odebrat. Uživatelská zpráva po odeslání zobrazuje název přílohy. Jde o přehled přílohy, nikoli o náhled obsahu dokumentu.
 - Výběr složky systémovým dialogem a její přidání do seznamu připojených složek; uživatel potvrdil funkčnost v Windows portable variantě.
 
@@ -84,7 +84,8 @@ Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovano
 - UI přehled jedné vybrané přílohy je implementován. Skutečné obrazové náhledy a multimodální zpracování obrázků zatím hotové nejsou.
 
 - Kód pro extrakci DOCX, XLSX, PPTX, ODT, ODS a ODP je přidán do `core/file_processing.py`.
-- Chatový endpoint a výběr souboru v UI přijímají nové formáty; CSV zůstává podporováno.
+- Chatový endpoint a výběr souboru v UI přijímají DOCX, XLSX, PPTX, ODT, ODS a ODP; CSV zůstává podporováno.
+- Chatový endpoint a výběr souboru v UI nově přijímají také `.htm`, `.html`, `.css` a `.js`. Tyto soubory se předávají modelu jako zdrojový text; JavaScript se nespouští. Runtime test HTML přílohy je připraven, ale zatím nebyl spuštěn.
 - Závislosti `python-docx`, `openpyxl`, `python-pptx` a `odfpy` jsou v `requirements.txt`; portable setup kontroluje jejich přítomnost.
 - Extrakce dokumentů převádí text a dostupné tabulkové hodnoty na textový kontext. Nejde o zachování původního formátování ani o obrazovou analýzu vložených obrázků.
 - Je zavedena kontrola ZIP kontejnerů a limit 100 000 znaků extrahovaného textu.
@@ -104,7 +105,8 @@ Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovano
 4. Ověřit instalaci a použití `llama-cpp-python` a embedding modelu.
 5. Prověřit chování paměti při chybějícím modelu a při souběžných požadavcích.
 6. Přidat automatické testy backendu a bezpečnostních omezení.
-7. Teprve poté pokračovat v historii konverzací, projektovém kontextu a tool calling.
+7. Dokončit runtime ověření historie API a následně přidat UI pro seznam a opětovné otevření konverzací.
+8. Navázat bezpečnou správou projektových souborů a izolovaným náhledem HTML kalkulaček.
 8. Historické soubory odstraňovat až po porovnání a archivaci.
 
 ## Poznámka k ověření
