@@ -50,10 +50,10 @@ def _saved_attachment_text(attachment):
     return ""
 
 
-def _build_history_context(messages):
+def _build_history_context(messages, max_chars=MAX_HISTORY_CHARS):
     """Build a bounded chronological context; the database history remains complete."""
     selected = []
-    remaining = MAX_HISTORY_CHARS
+    remaining = max_chars
     for message in reversed(messages[-MAX_HISTORY_MESSAGES:]):
         if message.get("role") not in {"user", "assistant"}:
             continue
@@ -246,16 +246,21 @@ def chat():
     parent_message_id = None
     if conversation_id:
         try:
-            existing = conversation_manager.get_conversation(
-                conversation_id, include_messages=True
+            previous_messages = conversation_manager.get_recent_messages(
+                conversation_id, limit=MAX_HISTORY_MESSAGES
             )
-            previous_messages = existing.get("messages", [])
             if previous_messages and previous_messages[-1].get("role") == "assistant":
                 parent_message_id = previous_messages[-1]["id"]
         except ConversationError as exc:
             return jsonify({'odpoved': str(exc)}), 400
 
-    historie_info = _build_history_context(previous_messages)
+    history_budget = MAX_HISTORY_CHARS
+    if model_id.startswith(("ollama/", "lokalni_")):
+        history_budget = min(
+            MAX_HISTORY_CHARS,
+            max(4000, int(config.get("n_ctx", 2048)) * 2),
+        )
+    historie_info = _build_history_context(previous_messages, history_budget)
     soubor_info = (
         f"\nOBSAH AKTUÁLNĚ NAHRANÉHO SOUBORU:\n{text_ze_souboru}\n"
         if text_ze_souboru else ""
