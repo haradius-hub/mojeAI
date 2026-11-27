@@ -68,7 +68,7 @@ Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovano
 
 ## Co není implementováno
 
-- Kompletní historie konverzací, její vyhledávání, procházení a opětovné otevření.
+- Uživatelské UI pro seznam, vyhledávání, procházení a opětovné otevření historie konverzací. Základní ukládání zpráv přes API a návaznost v právě otevřené stránce už jsou implementovány.
 - Modelové function/tool calling, registr nástrojů a vykonávání volání podle rozhodnutí modelu.
 - AI čtení souborů z povolených projektových složek.
 - Bezpečné zápisy souborů, potvrzování uživatelem a automatické zálohy před změnou.
@@ -116,5 +116,9 @@ Windows portable aplikaci a připojování složek prakticky ověřil uživatel.
 - Přidán `core/conversations.py` s oddělenou servisní vrstvou pro vytvoření, výpis, načítání a doplňování konverzací a zpráv.
 - Výpis konverzací podporuje stránkování a počet zpráv; načtení konverzace vrací zprávy i metadata připojených souborů.
 - Validují se role, délky vstupů, stavy zpráv, stránkovací parametry a rodičovské vazby. SQL dotazy používají parametry.
-- Servisní vrstva zatím není napojena na `routes/chat.py` ani UI. Současný chat se tedy stále chová jako dosud a po restartu nemá historii.
-- Přidán `tests/test_conversations.py`; testy zatím nebyly spuštěny v runtime.
+- `routes/chat.py` nyní ukládá uživatelskou zprávu před voláním modelu a odpověď jako navazující zprávu. Při dalším požadavku se uživatelská zpráva naváže na předchozí odpověď.
+- Chatové UI předává a uchovává ID právě aktivní konverzace během otevřené stránky. Po obnovení stránky se zatím automaticky nenačte seznam historie; uživatelské procházení a znovuotevření chatů ještě není implementováno.
+- Při výjimce modelu nebo chybové odpovědi poskytovatele se uloží uživatelský dotaz i neúspěšná odpověď se stavem `failed`.
+- Dlouhodobá paměť `pamet.db` zůstává zachována a nadále se používá odděleně od historie.
+- Binární přílohy a jejich metadata se zatím trvale neukládají do historie; upload pipeline zůstává samostatnou etapou.
+- Přidány API testy v `tests/test_chat_api.py`; čekají na runtime spuštění spolu se stávajícími testy.
