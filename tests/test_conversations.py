@@ -101,5 +101,74 @@ class ConversationManagerTests(unittest.TestCase):
             self.manager.get_conversation("does-not-exist")
 
 
+    def test_pinned_conversations_keep_user_order_when_activity_changes(self):
+        bread = self.manager.create_conversation("Chléb")
+        perfume = self.manager.create_conversation("Výroba parfémů")
+        servers = self.manager.create_conversation("Servery")
+
+        self.manager.set_pinned(bread["id"], True)
+        self.manager.set_pinned(perfume["id"], True)
+        self.manager.set_pinned(servers["id"], True)
+
+        self.manager.add_message(servers["id"], "user", "Aktivní práce na serverech")
+        self.manager.add_message(servers["id"], "assistant", "Hotovo")
+
+        ordered = self.manager.list_conversations(limit=10)
+        self.assertEqual(
+            [item["id"] for item in ordered[:3]],
+            [bread["id"], perfume["id"], servers["id"]],
+        )
+        self.assertEqual(
+            [item["pin_order"] for item in ordered[:3]],
+            [1, 2, 3],
+        )
+
+        self.manager.reorder_pinned([
+            servers["id"], bread["id"], perfume["id"]
+        ])
+        ordered = self.manager.list_conversations(limit=10)
+        self.assertEqual(
+            [item["id"] for item in ordered[:3]],
+            [servers["id"], bread["id"], perfume["id"]],
+        )
+
+        self.manager.set_pinned(bread["id"], False)
+        ordered = self.manager.list_conversations(limit=10)
+        self.assertEqual(
+            [item["id"] for item in ordered[:2]],
+            [servers["id"], perfume["id"]],
+        )
+        self.assertEqual(
+            next(item for item in ordered if item["id"] == bread["id"])["is_pinned"],
+            0,
+        )
+
+    def test_conversation_search_matches_title_and_message_content(self):
+        first = self.manager.create_conversation("Pečení chleba")
+        second = self.manager.create_conversation("Servery")
+        self.manager.add_message(second["id"], "user", "Nastavení Debianu")
+
+        by_title = self.manager.list_conversations(search="chleba")
+        by_message = self.manager.list_conversations(search="Debian")
+        self.assertEqual([item["id"] for item in by_title], [first["id"]])
+        self.assertEqual([item["id"] for item in by_message], [second["id"]])
+
+    def test_add_attachment_persists_metadata_for_message(self):
+        conversation = self.manager.create_conversation("Dokumenty")
+        message = self.manager.add_message(conversation["id"], "user", "Soubor")
+        attachment_id = self.manager.add_attachment(
+            message["id"], "poznamky.txt", "uploads/test/poznamky.txt",
+            "text/plain", 5, "a" * 64,
+        )
+        loaded = self.manager.get_conversation(conversation["id"])
+        self.assertEqual(
+            loaded["messages"][0]["attachments"][0]["id"], attachment_id
+        )
+        self.assertEqual(
+            loaded["messages"][0]["attachments"][0]["storage_path"],
+            "uploads/test/poznamky.txt",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
