@@ -46,3 +46,18 @@ Testy byly přidány do repozitáře, ale v tomto kroku nebyly spuštěny v runt
 ```cmd
 python -m unittest discover -s tests -v
 ```
+
+## Druhá implementační etapa – úložiště konverzací
+
+**Stav:** servisní vrstva přidána; API/UI a runtime testy čekají.
+
+Nový modul `core/conversations.py` poskytuje:
+- vytvoření konverzace s volitelným projektem;
+- stránkovaný seznam nearchivovaných konverzací s počtem zpráv;
+- načtení konverzace včetně zpráv a metadat jejich příloh;
+- přidání zprávy s rolí, obsahem, rodičovskou vazbou a metadaty modelu/stavu;
+- načtení jednotlivé zprávy.
+
+Vrstva používá hlavní databázi `data/mojeai.db`, parametrizované SQL dotazy, cizí klíče a explicitní zavírání spojení. Nevolá modely, nepřijímá HTTP požadavky a nepracuje s binárním obsahem příloh. Výchozí chování tak zůstává oddělené od existujícího chatového endpointu a dlouhodobé paměti.
+
+Nové testy v `tests/test_conversations.py` pokrývají vytvoření a načtení konverzace, zprávy, stránkování, metadata příloh, odmítnutí rodiče z jiné konverzace a validaci vstupů. Testy jsou přidány, ale musí se spustit v lokálním prostředí.
