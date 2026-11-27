@@ -207,8 +207,9 @@ class ChatApiHistoryTests(unittest.TestCase):
     def test_uploaded_file_is_persisted_and_linked_to_user_message(self):
         html_source = "<html><body><h1>Trvalý soubor</h1></body></html>"
         with patch.object(
-            chat_route.Providers, "generuj", return_value="Soubor přečten."
-        ):
+            chat_route.Providers, "generuj",
+            side_effect=["Soubor přečten.", "Soubor je stále dostupný."],
+        ) as generate:
             response = self.client.post(
                 "/api/chat",
                 data={
@@ -230,6 +231,19 @@ class ChatApiHistoryTests(unittest.TestCase):
         self.assertTrue(os.path.isfile(stored_path))
         with open(stored_path, "r", encoding="utf-8") as stored:
             self.assertIn("Trvalý soubor", stored.read())
+
+        followup = self.client.post(
+            "/api/chat",
+            json={
+                "dotaz": "Co obsahoval dříve přiložený soubor?",
+                "model": "gemini",
+                "conversation_id": data["conversation_id"],
+            },
+        )
+        self.assertEqual(followup.status_code, 200)
+        followup_prompt = generate.call_args_list[1].args[0]
+        self.assertIn("Dříve přiložený soubor", followup_prompt)
+        self.assertIn("Trvalý soubor", followup_prompt)
 
     def test_conversation_list_pin_and_reorder_endpoints(self):
         with patch.object(
