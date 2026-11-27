@@ -326,4 +326,20 @@ class ConversationManager:
         return conversation_ids
 
 
+    def get_attachment(self, attachment_id):
+        attachment_id = self._validate_id(attachment_id, "příloha")
+        with self._connect() as db:
+            row = db.execute("""
+                SELECT a.id, a.message_id, a.original_name, a.storage_path,
+                       a.mime_type, a.size_bytes, a.sha256, a.created_at,
+                       m.conversation_id
+                FROM attachments a
+                JOIN messages m ON m.id = a.message_id
+                WHERE a.id = ?
+            """, (attachment_id,)).fetchone()
+            if row is None:
+                raise ConversationError("Příloha nebyla nalezena.")
+            return dict(row)
+
+
 conversation_manager = ConversationManager()
