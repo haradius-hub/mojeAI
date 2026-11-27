@@ -3,6 +3,7 @@ let dostupneModely = [];
 let vybranySoubor = null;
 // ID aktuální konverzace; po obnovení stránky se zatím začne nový chat.
 let aktivniKonverzaceId = null;
+let probihaOdesilaniDotazu = false;
 
 function zobrazToast(zprava, error = false) {
     const toast = document.getElementById('toast');
@@ -414,6 +415,8 @@ async function poslatDotaz() {
     const selectedOption = select.options[select.selectedIndex];
     
     if (!model) { zobrazToast('❌ Není vybraný žádný model', true); return; }
+    if (probihaOdesilaniDotazu) return;
+    probihaOdesilaniDotazu = true;
     
     const messages = document.getElementById('messages');
     const souborKOdeslani = vybranySoubor;
@@ -478,6 +481,7 @@ async function poslatDotaz() {
         document.getElementById('statusText').textContent = '❌ Chyba';
         zobrazToast(err.message || '❌ Chyba komunikace se serverem', true);
     } finally {
+        probihaOdesilaniDotazu = false;
         if (tlacitkoOdeslat) {
             tlacitkoOdeslat.disabled = false;
             tlacitkoOdeslat.textContent = puvodniTextTlacitka;
