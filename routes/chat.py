@@ -203,7 +203,7 @@ def chat():
                     zbyva -= len(casti[-1])
                     if zbyva <= 0:
                         break
-                text_ze_souboru = "\\n".join(casti)
+                text_ze_souboru = "\n".join(casti)
             elif pripona in {'.docx', '.xlsx', '.pptx', '.odt', '.ods', '.odp'}:
                 text_ze_souboru = extract_document_text(cesta, pripona)
             else:
