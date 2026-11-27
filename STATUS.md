@@ -68,7 +68,7 @@ Toto ověření se vztahuje na konkrétní uživatelské prostředí a testovano
 
 ## Co není implementováno
 
-- Uživatelské UI pro seznam, vyhledávání, procházení a opětovné otevření historie konverzací. Základní ukládání zpráv přes API a návaznost v právě otevřené stránce už jsou implementovány.
+- Plnohodnotné větvení konverzací a přepínání větví; současné rodičovské vazby zpráv nejsou kompletním modelem větví.
 - Modelové function/tool calling, registr nástrojů a vykonávání volání podle rozhodnutí modelu.
 - AI čtení souborů z povolených projektových složek.
 - Bezpečné zápisy souborů, potvrzování uživatelem a automatické zálohy před změnou.
@@ -119,10 +119,10 @@ Windows portable aplikaci a připojování složek prakticky ověřil uživatel.
 - Výpis konverzací podporuje stránkování a počet zpráv; načtení konverzace vrací zprávy i metadata připojených souborů.
 - Validují se role, délky vstupů, stavy zpráv, stránkovací parametry a rodičovské vazby. SQL dotazy používají parametry.
 - `routes/chat.py` nyní ukládá uživatelskou zprávu před voláním modelu a odpověď jako navazující zprávu. Při dalším požadavku se uživatelská zpráva naváže na předchozí odpověď.
-- Chatové UI předává a uchovává ID právě aktivní konverzace během otevřené stránky. Po obnovení stránky se zatím automaticky nenačte seznam historie; uživatelské procházení a znovuotevření chatů ještě není implementováno.
+- Chatové UI předává ID aktivní konverzace, zobrazuje seznam historie, umožňuje vyhledávání a znovuotevření chatů. Levý panel přepíná mezi Konverzace a Nastavení.
 - Při výjimce modelu nebo chybové odpovědi poskytovatele se uloží uživatelský dotaz i neúspěšná odpověď se stavem `failed`.
 - Dlouhodobá paměť `pamet.db` zůstává zachována a nadále se používá odděleně od historie.
-- Binární přílohy a jejich metadata se zatím trvale neukládají do historie; upload pipeline zůstává samostatnou etapou.
+- Trvalé ukládání podporovaných příloh do data/uploads a metadata navázaná na zprávu jsou implementována; více souborů na jednu zprávu a obrázkové vstupy zůstávají plánované.
 - Přidány API testy v `tests/test_chat_api.py`; čekají na runtime spuštění spolu se stávajícími testy.
 
 
