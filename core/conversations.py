@@ -94,7 +94,8 @@ class ConversationManager:
             raise ConversationError("Neplatné ID projektu.")
         query = """
             SELECT c.id, c.project_id, c.title, c.created_at, c.updated_at,
-                   c.archived_at, COUNT(m.id) AS message_count
+                   c.archived_at, c.is_pinned, c.pin_order,
+                   COUNT(m.id) AS message_count
             FROM conversations c
             LEFT JOIN messages m ON m.conversation_id = c.id
             WHERE c.archived_at IS NULL
@@ -105,7 +106,9 @@ class ConversationManager:
             params.append(project_id)
         query += """
             GROUP BY c.id
-            ORDER BY c.updated_at DESC, c.id DESC
+            ORDER BY c.is_pinned DESC,
+                     CASE WHEN c.is_pinned = 1 THEN c.pin_order END ASC,
+                     c.updated_at DESC, c.id DESC
             LIMIT ? OFFSET ?
         """
         params.extend((limit, offset))
@@ -119,7 +122,8 @@ class ConversationManager:
             raise ConversationError("include_messages musí být boolean.")
         with self._connect() as db:
             row = db.execute("""
-                SELECT id, project_id, title, created_at, updated_at, archived_at
+                SELECT id, project_id, title, created_at, updated_at, archived_at,
+                       is_pinned, pin_order
                 FROM conversations WHERE id = ?
             """, (conversation_id,)).fetchone()
             if row is None:
