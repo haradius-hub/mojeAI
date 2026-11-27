@@ -1,4 +1,5 @@
 """Runtime tests for the chat API and persistent conversation history."""
+import io
 import os
 import sys
 import tempfile
@@ -148,6 +149,33 @@ class ChatApiHistoryTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 400)
         generate.assert_not_called()
+
+
+    def test_html_attachment_is_read_as_source_text_not_executed(self):
+        html_source = (
+            "<!doctype html><html><head><title>Kalkulačka</title></head>"
+            "<body><input id='hmotnost'><script>"
+            "function prepocet(g){ return g * 0.015; }"
+            "</script></body></html>"
+        )
+        with patch.object(
+            chat_route.Providers, "generuj", return_value="Soubor obsahuje kalkulačku."
+        ) as generate:
+            response = self.client.post(
+                "/api/chat",
+                data={
+                    "dotaz": "Vysvětli tuto kalkulačku",
+                    "model": "gemini",
+                    "file": (io.BytesIO(html_source.encode("utf-8")), "kalkulacka.htm"),
+                },
+                content_type="multipart/form-data",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        prompt = generate.call_args.args[0]
+        self.assertIn("OBSAH NAHRANÉHO SOUBORU", prompt)
+        self.assertIn("function prepocet(g)", prompt)
+        self.assertIn("Kalkulačka", prompt)
 
 
 if __name__ == "__main__":
