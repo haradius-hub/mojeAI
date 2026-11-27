@@ -380,7 +380,12 @@ def list_conversations():
 @chat_bp.route("/api/conversations/<conversation_id>", methods=["GET"])
 def get_conversation(conversation_id):
     try:
-        return jsonify(conversation_manager.get_conversation(conversation_id))
+        conversation = conversation_manager.get_conversation(conversation_id)
+        for message in conversation.get("messages", []):
+            for attachment in message.get("attachments", []):
+                attachment.pop("storage_path", None)
+                attachment.pop("sha256", None)
+        return jsonify(conversation)
     except ConversationError as exc:
         return jsonify({"error": str(exc)}), 404
 
