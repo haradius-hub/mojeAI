@@ -1,5 +1,5 @@
 # routes/chat.py
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from config import Config
 from core.memory import memory_manager
 from core.providers import Providers
@@ -11,9 +11,78 @@ import os
 import tempfile
 from werkzeug.utils import secure_filename
 import json
+import hashlib
+import uuid
 from ddgs import DDGS
 
 chat_bp = Blueprint('chat', __name__)
+
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+MAX_HISTORY_MESSAGES = 12
+MAX_HISTORY_CHARS = 24000
+
+
+def _saved_attachment_text(attachment):
+    """Read only supported text/document attachments from the managed data directory."""
+    relative = attachment.get("storage_path", "")
+    root = os.path.realpath(Config.DATA_DIR)
+    path = os.path.realpath(os.path.join(root, relative))
+    if os.path.commonpath([root, path]) != root or not os.path.isfile(path):
+        return ""
+    extension = os.path.splitext(attachment.get("original_name", ""))[1].lower()
+    try:
+        if extension == ".pdf":
+            from pypdf import PdfReader
+            reader = PdfReader(path)
+            return "\n".join((page.extract_text() or "") for page in reader.pages[:100])[:12000]
+        if extension in {".docx", ".xlsx", ".pptx", ".odt", ".ods", ".odp"}:
+            return extract_document_text(path, extension)[:12000]
+        if extension in {
+            ".txt", ".md", ".py", ".csv", ".htm", ".html", ".css", ".js"
+        }:
+            with open(path, "r", encoding="utf-8-sig") as file:
+                return file.read(12000)
+    except Exception as exc:
+        print(
+            f"[VAROVANI] Starší přílohu {attachment.get('original_name', '')} "
+            f"nelze načíst: {type(exc).__name__}: {exc}"
+        )
+    return ""
+
+
+def _build_history_context(messages):
+    """Build a bounded chronological context; the database history remains complete."""
+    selected = []
+    remaining = MAX_HISTORY_CHARS
+    for message in reversed(messages[-MAX_HISTORY_MESSAGES:]):
+        if message.get("role") not in {"user", "assistant"}:
+            continue
+        content = (message.get("content") or "").strip()
+        attachment_parts = []
+        for attachment in message.get("attachments", []):
+            extracted = _saved_attachment_text(attachment)
+            if extracted:
+                attachment_parts.append(
+                    f"[Dříve přiložený soubor: {attachment.get('original_name', 'soubor')}]\n{extracted}"
+                )
+        if attachment_parts:
+            content += "\n\n" + "\n\n".join(attachment_parts)
+        if len(content) > remaining:
+            content = content[-remaining:]
+        if not content:
+            break
+        selected.append((message["role"], content))
+        remaining -= len(content)
+        if remaining <= 0:
+            break
+    selected.reverse()
+    if not selected:
+        return "Žádné předchozí zprávy."
+    labels = {"user": "UŽIVATEL", "assistant": "ASISTENT"}
+    return "\n\n".join(
+        f"{labels[role]}:\n{content}" for role, content in selected
+    )
+
 
 def hledej_na_internetu(dotaz):
     dotaz_lower = dotaz.lower()
@@ -102,6 +171,10 @@ def chat():
         return jsonify({'odpoved': 'Prosim napis otazku nebo nahraj soubor.'})
 
     text_ze_souboru = ""
+    upload_bytes = None
+    upload_original_name = None
+    upload_mime_type = None
+    upload_extension = None
     if nahrany_soubor:
         puvodni_nazev = secure_filename(nahrany_soubor.filename or '')
         pripona = os.path.splitext(puvodni_nazev)[1].lower()
@@ -116,6 +189,9 @@ def chat():
         temp_file.close()
         try:
             nahrany_soubor.save(cesta)
+            upload_size = os.path.getsize(cesta)
+            if upload_size > MAX_UPLOAD_BYTES:
+                return jsonify({'odpoved': 'Soubor překračuje limit 25 MB.'}), 413
             if pripona == '.pdf':
                 from pypdf import PdfReader
                 reader = PdfReader(cesta)
@@ -135,6 +211,11 @@ def chat():
                     text_ze_souboru = f.read(100001)
                 if len(text_ze_souboru) > 100000:
                     return jsonify({'odpoved': 'Textový obsah souboru překračuje limit 100 000 znaků.'}), 413
+            with open(cesta, 'rb') as uploaded_file:
+                upload_bytes = uploaded_file.read()
+            upload_original_name = (nahrany_soubor.filename or 'soubor')[:255]
+            upload_mime_type = nahrany_soubor.mimetype
+            upload_extension = pripona
         except ValueError as e:
             kod = 413 if 'překračuje limit' in str(e) or 'překračuje bezpečnostní limit' in str(e) else 400
             return jsonify({'odpoved': str(e)}), kod
@@ -159,30 +240,42 @@ def chat():
         memory_manager.uloz(f"Internetove vyhledavani: {dotaz}\nVysledek: {vysledky}", zdroj="internet")
 
     vzpominky = memory_manager.hledej(dotaz, pocet=config.get("max_vzpominek", 5))
-    kontext = "\n".join(vzpominky) if vzpominky else "Zadne relevantni vzpominky."
-    
-    soubor_info = f"\nOBSAH NAHRANÉHO SOUBORU:\n{text_ze_souboru}\n" if text_ze_souboru else ""
+    kontext = "\\n".join(vzpominky) if vzpominky else "Zadne relevantni vzpominky."
+
+    previous_messages = []
+    parent_message_id = None
+    if conversation_id:
+        try:
+            existing = conversation_manager.get_conversation(
+                conversation_id, include_messages=True
+            )
+            previous_messages = existing.get("messages", [])
+            if previous_messages and previous_messages[-1].get("role") == "assistant":
+                parent_message_id = previous_messages[-1]["id"]
+        except ConversationError as exc:
+            return jsonify({'odpoved': str(exc)}), 400
+
+    historie_info = _build_history_context(previous_messages)
+    soubor_info = (
+        f"\\nOBSAH AKTUÁLNĚ NAHRANÉHO SOUBORU:\\n{text_ze_souboru}\\n"
+        if text_ze_souboru else ""
+    )
 
     prompt = f"""{config.get('system_prompt')}
 Aktualni datum a cas: {ted}
 PAMET:
 {kontext}
 {internet_info}
+PŘEDCHOZÍ PRŮBĚH KONVERZACE:
+{historie_info}
 {soubor_info}
 OTAZKA: {dotaz}
 ODPOVED:"""
-    
-    # Historie je oddělena od dlouhodobé paměti. Uživatelova zpráva se uloží
-    # ještě před voláním modelu, aby při jeho chybě nezmizel původní dotaz.
+
+    # Uživatelova zpráva se uloží před voláním modelu.
     try:
-        parent_message_id = None
-        if conversation_id:
-            existing = conversation_manager.get_conversation(conversation_id, include_messages=True)
-            previous_messages = existing.get("messages", [])
-            if previous_messages and previous_messages[-1].get("role") == "assistant":
-                parent_message_id = previous_messages[-1]["id"]
-        else:
-            nazev = (dotaz.strip() or (nahrany_soubor.filename if nahrany_soubor else "Nová konverzace"))[:200]
+        if not conversation_id:
+            nazev = (dotaz.strip() or upload_original_name or "Nová konverzace")[:200]
             conversation = conversation_manager.create_conversation(title=nazev)
             conversation_id = conversation["id"]
 
@@ -195,6 +288,28 @@ ODPOVED:"""
             conversation_id, "user", dotaz, parent_message_id=parent_message_id,
             provider=provider, model=model_id
         )
+
+        if upload_bytes is not None:
+            upload_dir = os.path.join(Config.DATA_DIR, "uploads", conversation_id)
+            os.makedirs(upload_dir, exist_ok=True)
+            safe_name = secure_filename(upload_original_name or "") or ("soubor" + (upload_extension or ""))
+            stored_name = uuid.uuid4().hex + "_" + safe_name
+            absolute_path = os.path.join(upload_dir, stored_name)
+            relative_path = os.path.relpath(
+                absolute_path, Config.DATA_DIR
+            ).replace("\\", "/")
+            try:
+                with open(absolute_path, "wb") as stored_file:
+                    stored_file.write(upload_bytes)
+                conversation_manager.add_attachment(
+                    user_message["id"], upload_original_name, relative_path,
+                    upload_mime_type, len(upload_bytes),
+                    hashlib.sha256(upload_bytes).hexdigest(),
+                )
+            except Exception:
+                if os.path.exists(absolute_path):
+                    os.remove(absolute_path)
+                raise
     except ConversationError as e:
         return jsonify({'odpoved': str(e)}), 400
     except Exception as e:
@@ -242,3 +357,66 @@ ODPOVED:"""
         'assistant_message_id': assistant_message["id"],
         'status': status
     })
+
+@chat_bp.route("/api/conversations", methods=["GET"])
+def list_conversations():
+    try:
+        limit = int(request.args.get("limit", 100))
+        offset = int(request.args.get("offset", 0))
+        search = request.args.get("q", "").strip()
+        items = conversation_manager.list_conversations(
+            limit=limit, offset=offset, search=search
+        )
+        return jsonify({"conversations": items, "limit": limit, "offset": offset})
+    except (ValueError, ConversationError) as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@chat_bp.route("/api/conversations/<conversation_id>", methods=["GET"])
+def get_conversation(conversation_id):
+    try:
+        return jsonify(conversation_manager.get_conversation(conversation_id))
+    except ConversationError as exc:
+        return jsonify({"error": str(exc)}), 404
+
+
+@chat_bp.route("/api/conversations/<conversation_id>/pin", methods=["POST"])
+def set_conversation_pin(conversation_id):
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict) or not isinstance(data.get("pinned"), bool):
+        return jsonify({"error": "Očekávána boolean hodnota pinned."}), 400
+    try:
+        return jsonify(conversation_manager.set_pinned(
+            conversation_id, data["pinned"]
+        ))
+    except ConversationError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@chat_bp.route("/api/conversations/pinned-order", methods=["POST"])
+def reorder_pinned_conversations():
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Očekávána JSON data."}), 400
+    try:
+        order = conversation_manager.reorder_pinned(data.get("conversation_ids"))
+        return jsonify({"status": "ok", "conversation_ids": order})
+    except ConversationError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@chat_bp.route("/api/attachments/<attachment_id>", methods=["GET"])
+def download_attachment(attachment_id):
+    try:
+        attachment = conversation_manager.get_attachment(attachment_id)
+        root = os.path.realpath(Config.DATA_DIR)
+        path = os.path.realpath(os.path.join(root, attachment["storage_path"]))
+        if os.path.commonpath([root, path]) != root or not os.path.isfile(path):
+            return jsonify({"error": "Soubor přílohy nebyl nalezen."}), 404
+        return send_file(
+            path, as_attachment=True,
+            download_name=attachment["original_name"],
+            mimetype=attachment.get("mime_type") or "application/octet-stream",
+        )
+    except ConversationError as exc:
+        return jsonify({"error": str(exc)}), 404
