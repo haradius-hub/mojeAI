@@ -240,7 +240,7 @@ def chat():
         memory_manager.uloz(f"Internetove vyhledavani: {dotaz}\nVysledek: {vysledky}", zdroj="internet")
 
     vzpominky = memory_manager.hledej(dotaz, pocet=config.get("max_vzpominek", 5))
-    kontext = "\\n".join(vzpominky) if vzpominky else "Zadne relevantni vzpominky."
+    kontext = "\n".join(vzpominky) if vzpominky else "Zadne relevantni vzpominky."
 
     previous_messages = []
     parent_message_id = None
@@ -257,7 +257,7 @@ def chat():
 
     historie_info = _build_history_context(previous_messages)
     soubor_info = (
-        f"\\nOBSAH AKTUÁLNĚ NAHRANÉHO SOUBORU:\\n{text_ze_souboru}\\n"
+        f"\nOBSAH AKTUÁLNĚ NAHRANÉHO SOUBORU:\n{text_ze_souboru}\n"
         if text_ze_souboru else ""
     )
 
