@@ -13,8 +13,28 @@
 
 <!-- Samotný panel (už jen jednou) -->
 <div class="sidebar" id="sidebar">
-    <h2>⚙️ Nastavení</h2>
-    
+    <div class="sidebar-navigation">
+        <div class="sidebar-caption" id="sidebarSectionTitle">Konverzace</div>
+        <div class="sidebar-tabs">
+            <button type="button" id="conversationsTab" class="sidebar-tab active" onclick="prepniPanel('conversations')">💬 Chaty</button>
+            <button type="button" id="settingsTab" class="sidebar-tab" onclick="prepniPanel('settings')">⚙️ Nastavení</button>
+        </div>
+    </div>
+
+    <div id="conversationsPanel" class="sidebar-panel">
+        <button type="button" class="new-chat-button" onclick="novyChat()">＋ Nový chat</button>
+        <input type="search" id="conversationSearch" class="conversation-search" placeholder="Hledat v konverzacích…">
+        <div class="conversation-group">
+            <div class="conversation-group-title">📌 Připnuté</div>
+            <div id="pinnedConversations" class="conversation-list"></div>
+        </div>
+        <div class="conversation-group">
+            <div class="conversation-group-title">Nedávné</div>
+            <div id="recentConversations" class="conversation-list"></div>
+        </div>
+    </div>
+
+    <div id="settingsPanel" class="sidebar-panel" hidden>
     <label>🧠 Model</label>
     <select id="modelSelect"><option value="">Načítám...</option></select>
     
@@ -76,6 +96,7 @@
             <button onclick="nactiPamet()" style="width:auto;padding:2px 10px;font-size:11px;background:#1f6feb;">↻</button>
         </div>
         <div class="memory-box" id="memoryList"><div style="color:#8b949e;font-size:12px;">Načítám...</div></div>
+    </div>
     </div>
 </div>
 
