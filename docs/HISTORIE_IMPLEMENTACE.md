@@ -78,3 +78,35 @@ Nové testy v `tests/test_conversations.py` pokrývají vytvoření a načtení 
 - Příjem `.htm`, `.html`, `.css` a `.js` je doplněn do stávajícího uploadu. Obsah se předává modelu jako text pro analýzu; kód se nevykonává. Souběžná analýza více souborů a izolovaný náhled/spuštění HTML aplikace zůstávají plánované.
 - Přidán `tests/test_chat_api.py` pro první/ navazující zprávu, chybu modelu a neexistující ID. Testy zatím nebyly spuštěny v runtime.
 
+
+
+## Čtvrtá implementační etapa – kontext, přílohy a uživatelská historie
+
+**Stav:** implementováno na pracovní větvi; automatické testy doplněny, lokální runtime ověření této etapy čeká.
+
+- Migrace 4 přidává sloupce is_pinned a pin_order. Výchozí hodnoty zachovají všechny dosavadní konverzace jako nepřipnuté.
+- Seznam konverzací řadí připnuté chaty podle ručně spravovaného pin_order a běžné chaty podle poslední aktivity. Aktivita připnutého chatu pořadí nemění.
+- Připnutí a odepinutí udržuje souvislé pořadí; API odmítne neúplný nebo duplicitní seznam při změně pořadí.
+- Přidán textový vyhledávací dotaz nad názvy konverzací a obsahem zpráv.
+- Chat API poskytuje seznam, detail konverzace, připnutí, změnu pořadí a stažení příloh.
+- Chatové UI má výchozí sekci Konverzace, přepínač Nastavení, tlačítko Nový chat, vyhledávání, otevření starších chatů a ovládání připnutí. Připnuté položky lze přetahovat myší; při aktivním vyhledávání je přetahování vypnuto, aby se neposílal neúplný seznam pořadí.
+- Model dostává nejvýše 12 posledních zpráv. Textový limit je nejvýše 24 000 znaků; pro lokální modely se snižuje podle nastavení n_ctx. Historie v databázi se nezkracuje ani nemaže.
+- Přílohy se ukládají do data/uploads/<conversation_id>/, jejich metadata se ukládají do tabulky attachments a jsou navázána na uživatelskou zprávu. Limit jednoho uploadu je 25 MB.
+- Při pokračování se podporované starší textové a kancelářské přílohy znovu načítají z trvalého úložiště do omezeného kontextu.
+- API při vracení detailu konverzace nezveřejňuje interní úložné cesty ani SHA-256. Samostatný endpoint poskytuje stažení přílohy.
+- Opraveno ukládání přepínače internetu: UI nyní kontroluje HTTP status i aplikační status odpovědi serveru.
+
+### Doplněné automatické testy
+
+- Migrace 4 zachová existující konverzace a nastaví výchozí stav připnutí.
+- Připnuté chaty drží pořadí i po nové aktivitě; změna pořadí a odepinutí přepočítají pořadí.
+- Vyhledávání najde konverzaci podle názvu i obsahu zprávy.
+- Metadata příloh a omezené chronologické načtení posledních zpráv jsou pokryty testy.
+- Chat API testy ověřují vložení předchozích zpráv do promptu, trvalé uložení přílohy a API seznamu/připnutí/pořadí.
+
+### Co zůstává mimo tuto etapu
+
+- Větvení konverzací není implementováno; rodičovské vazby zpráv stále nejsou plnohodnotným stromem větví.
+- Připojování konverzací k projektům, více souborů v jedné zprávě, obrázkové vstupy, drag-and-drop upload a bezpečný HTML preview zůstávají samostatnými úkoly.
+- Detail konverzace se nyní načítá celý; serverový kontext modelu je omezený samostatně. Stránkování dlouhého zobrazení historie lze doplnit podle praktického testu.
+- Automatické testy nebyly v tomto vývojovém prostředí spuštěny. Je nutné je spustit v uživatelově Windows portable instalaci.
