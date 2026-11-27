@@ -124,3 +124,21 @@ Windows portable aplikaci a připojování složek prakticky ověřil uživatel.
 - Dlouhodobá paměť `pamet.db` zůstává zachována a nadále se používá odděleně od historie.
 - Binární přílohy a jejich metadata se zatím trvale neukládají do historie; upload pipeline zůstává samostatnou etapou.
 - Přidány API testy v `tests/test_chat_api.py`; čekají na runtime spuštění spolu se stávajícími testy.
+
+
+## Aktualizace historie a uživatelského rozhraní – 27. 11. 2026
+
+**Implementováno na pracovní větvi cleanup/repository-audit; runtime test nové etapy čeká.**
+
+- Databázová migrace 4 přidává připínání konverzací a stabilní pin_order. Dosavadní chaty zůstávají zachované a výchozím stavem jsou nepřipnuté.
+- Připnuté konverzace se řadí podle ručně určeného pořadí a aktivita je nepřesouvá. Ostatní konverzace se řadí podle poslední aktivity.
+- Přidáno API pro seznam, hledání podle názvu/obsahu, detail, připnutí, změnu pořadí a stažení příloh.
+- Levý panel nyní obsahuje výchozí sekci Konverzace a přepínání do Nastavení. Seznam nabízí nový chat, hledání, otevření historie, připnutí a přetažení připnutých položek.
+- Chat API sestavuje modelový kontext z nejvýše 12 posledních zpráv. Celkový limit je nejvýše 24 000 znaků a pro lokální modely se upravuje podle n_ctx. Historie v databázi zůstává úplná.
+- Podporované nahrané soubory se ukládají do data/uploads/<conversation_id>/, metadata jsou propojena se zprávou. Limit jednoho souboru je 25 MB.
+- Při pokračování se z trvalého úložiště znovu načítá obsah podporovaných textových a kancelářských příloh.
+- Opraveno ukládání přepínače internetu – UI kontroluje HTTP i aplikační status.
+
+**Automatické testy:** rozšířeny testy migrací, ConversationManageru a chat API o připínání, pořadí, vyhledávání, omezenou historii, kontext předchozích zpráv a trvalé přílohy. Testy nebyly v tomto vývojovém prostředí spuštěny; vyžadují lokální spuštění uživatelem.
+
+**Omezení:** plnohodnotné větvení, stránkování vykreslení velmi dlouhých chatů, více souborů na jednu zprávu, obrázky a bezpečný HTML preview nejsou součástí této etapy.
