@@ -82,7 +82,7 @@ class ConversationManager:
             raise ConversationError("Projekt konverzace neexistuje.") from exc
         return self.get_conversation(conversation_id)
 
-    def list_conversations(self, limit=50, offset=0, project_id=None):
+    def list_conversations(self, limit=50, offset=0, project_id=None, search=""):
         if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 200:
             raise ConversationError("Limit musí být celé číslo od 1 do 200.")
         if isinstance(offset, bool) or not isinstance(offset, int) or offset < 0:
@@ -92,6 +92,8 @@ class ConversationManager:
             or project_id < 1
         ):
             raise ConversationError("Neplatné ID projektu.")
+        if not isinstance(search, str) or len(search) > 200:
+            raise ConversationError("Hledaný výraz musí být text do 200 znaků.")
         query = """
             SELECT c.id, c.project_id, c.title, c.created_at, c.updated_at,
                    c.archived_at, c.is_pinned, c.pin_order,
@@ -101,6 +103,16 @@ class ConversationManager:
             WHERE c.archived_at IS NULL
         """
         params = []
+        if search.strip():
+            query += """ AND (
+                c.title LIKE ? OR EXISTS (
+                    SELECT 1 FROM messages search_messages
+                    WHERE search_messages.conversation_id = c.id
+                      AND search_messages.content LIKE ?
+                )
+            )"""
+            pattern = "%" + search.strip() + "%"
+            params.extend((pattern, pattern))
         if project_id is not None:
             query += " AND c.project_id = ?"
             params.append(project_id)
