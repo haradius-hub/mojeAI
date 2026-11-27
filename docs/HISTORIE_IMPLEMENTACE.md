@@ -61,3 +61,19 @@ Nový modul `core/conversations.py` poskytuje:
 Vrstva používá hlavní databázi `data/mojeai.db`, parametrizované SQL dotazy, cizí klíče a explicitní zavírání spojení. Nevolá modely, nepřijímá HTTP požadavky a nepracuje s binárním obsahem příloh. Výchozí chování tak zůstává oddělené od existujícího chatového endpointu a dlouhodobé paměti.
 
 Nové testy v `tests/test_conversations.py` pokrývají vytvoření a načtení konverzace, zprávy, stránkování, metadata příloh, odmítnutí rodiče z jiné konverzace a validaci vstupů. Testy jsou přidány, ale musí se spustit v lokálním prostředí.
+
+
+## Třetí implementační etapa – napojení chatového API na historii
+
+**Stav:** implementováno na pracovní větvi; runtime testy čekají.
+
+- Endpoint `POST /api/chat` přijímá volitelné `conversation_id` v JSON i multipart požadavku.
+- Pokud ID chybí, vytvoří se nová konverzace s názvem odvozeným od první otázky (případně názvu souboru).
+- Uživatelská zpráva se uloží před voláním modelu. Následující uživatelská zpráva se naváže na předchozí odpověď; odpověď modelu je potomkem aktuální uživatelské zprávy.
+- Odpověď ukládá model, poskytovatele, dobu generování a stav. Výjimka modelu i chybová odpověď poskytovatele se evidují jako `failed`.
+- API vrací `conversation_id`, ID obou nových zpráv a stav odpovědi.
+- Chatové UI předává vrácené ID při dalších zprávách v rámci aktuálně otevřené stránky. Po obnovení stránky zatím neumí načíst historii ani znovuotevřít dřívější konverzaci.
+- Stávající dlouhodobá paměť zůstává beze změny a oddělená od historie.
+- Binární přílohy ani jejich metadata se v této etapě do historie neukládají; jejich trvalé úložiště a vícesouborový upload zůstávají samostatným úkolem.
+- Přidán `tests/test_chat_api.py` pro první/ navazující zprávu, chybu modelu a neexistující ID. Testy zatím nebyly spuštěny v runtime.
+
