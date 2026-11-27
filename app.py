@@ -14,7 +14,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     # Bezpečný výchozí limit; aplikace je v této etapě určena pouze pro localhost.
-    app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
+    app.config['MAX_CONTENT_LENGTH'] = 26 * 1024 * 1024
     
     @app.before_request
     def ochrana_lokalniho_provozu():
@@ -28,7 +28,7 @@ def create_app():
 
     @app.errorhandler(413)
     def pozadavek_prilis_velky(_error):
-        return {'status': 'error', 'zprava': 'Požadavek překračuje limit 10 MB.'}, 413
+        return {'status': 'error', 'zprava': 'Požadavek překračuje limit 26 MB (soubor může mít nejvýše 25 MB).'}, 413
 
     # Inicializace složek při startu
     Config.init_dirs()
