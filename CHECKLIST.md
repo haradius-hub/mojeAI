@@ -181,8 +181,10 @@ Pořadí implementace se řídí dokumentem `docs/ANALYZA_EXISTUJICICH_RESENI.md
 - [x] Přidat automatické testy migrací (zatím bez potvrzeného spuštění).
 - [ ] Spustit testy migrací a ověřit obnovu/zálohu na reálné kopii uživatelských dat.
 - [ ] Zachovat `pamet.db` a oddělit dlouhodobou paměť od historie.
-- [ ] Přidat trvalé ukládání konverzací a zpráv se stabilními ID.
+- [x] Přidat databázové tabulky konverzací a zpráv se stabilními textovými ID (migrace 3; API/UI zatím nejsou napojeny).
+- [x] Připravit metadata příloh navázaná na zprávy, včetně podpory více příloh na jednu zprávu (samotné ukládání souborů zatím není implementováno).
+- [ ] Napojit chatové API a UI na trvalou historii; přidat seznam, vyhledávání a opětovné otevření.
 - [ ] Připojit konverzace k projektům a ověřovat přístup ke zdrojům na serveru.
-- [ ] Navrhnout a otestovat rodičovské vazby zpráv pro budoucí větvení.
+- [ ] Spustit a ověřit testy rodičovských vazeb zpráv pro budoucí větvení.
 
 Podrobný návrh: [docs/DATOVY_MODEL.md](docs/DATOVY_MODEL.md). Návrh zatím nepředstavuje implementaci.
