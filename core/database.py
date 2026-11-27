@@ -12,7 +12,7 @@ class DatabaseMigrationError(RuntimeError):
 
 
 class DatabaseManager:
-    CURRENT_VERSION = 2
+    CURRENT_VERSION = 3
 
     def __init__(self, db_path, legacy_projects_path=None):
         self.db_path = os.path.abspath(db_path)
@@ -60,6 +60,9 @@ class DatabaseManager:
 
             if 2 not in applied:
                 self._migrate_legacy_projects(db)
+
+            if 3 not in applied:
+                self._migrate_conversation_history(db)
         except Exception:
             db.rollback()
             raise
@@ -196,3 +199,76 @@ class DatabaseManager:
         finally:
             if source is not None:
                 source.close()
+
+    def _migrate_conversation_history(self, db):
+        """Create persistent conversations, messages, and message attachments."""
+        try:
+            db.execute("BEGIN IMMEDIATE")
+            db.execute("""
+                CREATE TABLE conversations (
+                    id TEXT PRIMARY KEY,
+                    project_id INTEGER,
+                    title TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    archived_at TEXT,
+                    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
+                )
+            """)
+            db.execute("""
+                CREATE INDEX idx_conversations_project_updated
+                ON conversations(project_id, updated_at DESC)
+            """)
+            db.execute("""
+                CREATE TABLE messages (
+                    id TEXT PRIMARY KEY,
+                    conversation_id TEXT NOT NULL,
+                    parent_message_id TEXT,
+                    role TEXT NOT NULL CHECK(role IN ('system', 'user', 'assistant', 'tool')),
+                    content TEXT NOT NULL DEFAULT '',
+                    created_at TEXT NOT NULL,
+                    provider TEXT,
+                    model TEXT,
+                    status TEXT NOT NULL DEFAULT 'completed',
+                    error_code TEXT,
+                    duration_ms INTEGER,
+                    usage_json TEXT,
+                    UNIQUE(id, conversation_id),
+                    FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+                    FOREIGN KEY(parent_message_id, conversation_id)
+                        REFERENCES messages(id, conversation_id) ON DELETE RESTRICT
+                )
+            """)
+            db.execute("""
+                CREATE INDEX idx_messages_conversation_created
+                ON messages(conversation_id, created_at, id)
+            """)
+            db.execute("""
+                CREATE INDEX idx_messages_parent
+                ON messages(parent_message_id)
+            """)
+            db.execute("""
+                CREATE TABLE attachments (
+                    id TEXT PRIMARY KEY,
+                    message_id TEXT NOT NULL,
+                    original_name TEXT NOT NULL,
+                    storage_path TEXT NOT NULL UNIQUE,
+                    mime_type TEXT,
+                    size_bytes INTEGER NOT NULL CHECK(size_bytes >= 0),
+                    sha256 TEXT,
+                    created_at TEXT NOT NULL,
+                    FOREIGN KEY(message_id) REFERENCES messages(id) ON DELETE CASCADE
+                )
+            """)
+            db.execute("""
+                CREATE INDEX idx_attachments_message
+                ON attachments(message_id)
+            """)
+            self._record_migration(
+                db, 3, "conversation_history_and_attachments",
+                "Created persistent conversations, messages and attachment metadata."
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
