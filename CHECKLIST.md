@@ -38,7 +38,7 @@ Checklist rozlišuje existující implementaci od plánovaných funkcí. Zaškrt
 
 ## Rozšíření práce se soubory – implementováno, čeká na runtime test
 
-Současné nahrávání v chatovém požadavku podporuje PDF, TXT, MD, PY a CSV. CSV zůstává zachováno.
+Současné nahrávání v chatovém požadavku podporuje PDF, TXT, MD, PY, CSV, HTM/HTML, CSS, JS, DOCX, XLSX, PPTX, ODT, ODS a ODP. HTML/CSS/JS se předávají modelu jako zdrojový text; JavaScript se při analýze nespouští.
 
 - [x] Přidat extrakci obsahu z DOCX.
 - [x] Přidat zpracování XLSX včetně listů a tabulkových hodnot.
@@ -55,13 +55,13 @@ Současné nahrávání v chatovém požadavku podporuje PDF, TXT, MD, PY a CSV.
 
 Další pořadí: (1) obrázky PNG, JPG/JPEG a WebP včetně předávání multimodálním providerům, (2) společné testování všech podporovaných formátů. Kancelářské dokumenty se převádějí na textový kontext; vložené obrázky se zatím neanalyzují.
 
-- [ ] Přidat bezpečné čtení a analýzu HTML souborů `.htm` a `.html`, včetně obsahu, struktury, formulářů a JavaScriptových výpočtů.
-- [ ] Podporovat související projektové soubory `.css` a `.js` a zachovat jejich relativní vazby a složkovou strukturu.
+- [x] Přidat příjem a textovou analýzu `.htm`, `.html`, `.css` a `.js` jako zdrojových souborů (bez jejich spuštění).
+- [ ] Analyzovat související projektové soubory společně a zachovat jejich relativní vazby a složkovou strukturu.
 - [ ] Připravit bezpečný izolovaný náhled/spuštění HTML kalkulaček; nespouštět nedůvěryhodný JavaScript přímo v hlavním rozhraní MojeAI.
 
 ## Funkce plánované – zatím nejsou hotové
 
-- [x] Databázová a servisní vrstva historie: vytvoření, výpis, načtení a přidávání zpráv (API/UI zatím nejsou napojeny).
+- [x] Databázová a servisní vrstva historie: vytvoření, výpis, načtení a přidávání zpráv.
 - [x] Napojit chatové API na historii a zachovat návaznost dotaz–odpověď (runtime testy čekají).
 - [x] Předávat ID aktivní konverzace z chatového UI během otevřené stránky.
 - [ ] Přidat UI seznam, vyhledávání a opětovné otevření konverzací.
@@ -189,10 +189,12 @@ Pořadí implementace se řídí dokumentem `docs/ANALYZA_EXISTUJICICH_RESENI.md
 - [x] Přidat automatické testy migrací (zatím bez potvrzeného spuštění).
 - [ ] Spustit testy migrací a ověřit obnovu/zálohu na reálné kopii uživatelských dat.
 - [ ] Zachovat `pamet.db` a oddělit dlouhodobou paměť od historie.
-- [x] Přidat databázové tabulky konverzací a zpráv se stabilními textovými ID (migrace 3; API/UI zatím nejsou napojeny).
+- [x] Přidat databázové tabulky konverzací a zpráv se stabilními textovými ID (migrace 3).
 - [x] Připravit metadata příloh navázaná na zprávy, včetně podpory více příloh na jednu zprávu (samotné ukládání souborů zatím není implementováno).
-- [ ] Napojit chatové API a UI na trvalou historii; přidat seznam, vyhledávání a opětovné otevření.
+- [x] Napojit chatové API a aktivní chatové UI na trvalou historii (ID se předává během otevřené stránky).
+- [ ] Přidat seznam, vyhledávání a opětovné otevření konverzací.
 - [ ] Připojit konverzace k projektům a ověřovat přístup ke zdrojům na serveru.
-- [ ] Spustit nové testy servisní vrstvy historie a následně testy rodičovských vazeb zpráv.
+- [x] Uživatelsky spustit databázové a servisní testy historie (13 testů prošlo 27. 11. 2026).
+- [ ] Spustit nové API testy včetně HTML přílohy.
 
 Podrobný návrh: [docs/DATOVY_MODEL.md](docs/DATOVY_MODEL.md). Návrh zatím nepředstavuje implementaci.
