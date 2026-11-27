@@ -52,11 +52,16 @@ class DatabaseMigrationTests(unittest.TestCase):
         versions = db.execute(
             "SELECT version FROM schema_migrations ORDER BY version"
         ).fetchall()
-        self.assertEqual(versions, [(1,), (2,)])
-        self.assertEqual(
-            db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='projects'").fetchone(),
-            ("projects",),
-        )
+        self.assertEqual(versions, [(1,), (2,), (3,)])
+        table_names = {
+            row[0] for row in db.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
+        }
+        self.assertTrue({
+            "projects", "project_folders", "conversations", "messages",
+            "attachments"
+        }.issubset(table_names))
         db.close()
 
     def test_legacy_projects_and_folders_are_copied_without_changing_source(self):
@@ -89,7 +94,7 @@ class DatabaseMigrationTests(unittest.TestCase):
         db = sqlite3.connect(self.main_db)
         self.assertEqual(db.execute("SELECT COUNT(*) FROM projects").fetchone()[0], 1)
         self.assertEqual(db.execute("SELECT COUNT(*) FROM project_folders").fetchone()[0], 1)
-        self.assertEqual(db.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0], 2)
+        self.assertEqual(db.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0], 3)
         db.close()
 
     def test_invalid_legacy_schema_is_not_marked_as_migrated(self):
@@ -108,6 +113,77 @@ class DatabaseMigrationTests(unittest.TestCase):
         self.assertEqual(versions, [(1,)])
         self.assertEqual(db.execute("SELECT COUNT(*) FROM projects").fetchone()[0], 0)
         db.close()
+
+    def test_conversation_messages_and_multiple_attachments_are_related(self):
+        manager = DatabaseManager(self.main_db, self.legacy_db)
+        manager.initialize()
+        db = manager.connect()
+        try:
+            db.execute("""
+                INSERT INTO conversations (id, title, created_at, updated_at)
+                VALUES ('conv-1', 'Testovací chat', '2026-11-27T10:00:00+00:00',
+                        '2026-11-27T10:00:00+00:00')
+            """)
+            db.execute("""
+                INSERT INTO messages
+                    (id, conversation_id, role, content, created_at)
+                VALUES ('msg-1', 'conv-1', 'user', 'Ahoj',
+                        '2026-11-27T10:00:00+00:00')
+            """)
+            db.execute("""
+                INSERT INTO messages
+                    (id, conversation_id, parent_message_id, role, content, created_at)
+                VALUES ('msg-2', 'conv-1', 'msg-1', 'assistant', 'Dobrý den',
+                        '2026-11-27T10:00:01+00:00')
+            """)
+            db.executemany("""
+                INSERT INTO attachments
+                    (id, message_id, original_name, storage_path, mime_type,
+                     size_bytes, sha256, created_at)
+                VALUES (?, 'msg-1', ?, ?, ?, ?, ?, ?)
+            """, [
+                ('att-1', 'poznamky.txt', 'uploads/conv-1/a.txt',
+                 'text/plain', 12, 'a' * 64, '2026-11-27T10:00:00+00:00'),
+                ('att-2', 'foto.dng', 'uploads/conv-1/b.dng',
+                 'image/x-adobe-dng', 1024, 'b' * 64, '2026-11-27T10:00:00+00:00'),
+            ])
+            db.commit()
+            self.assertEqual(
+                db.execute(
+                    "SELECT COUNT(*) FROM attachments WHERE message_id='msg-1'"
+                ).fetchone()[0],
+                2,
+            )
+            self.assertEqual(
+                db.execute(
+                    "SELECT parent_message_id FROM messages WHERE id='msg-2'"
+                ).fetchone()[0],
+                "msg-1",
+            )
+        finally:
+            db.close()
+
+    def test_message_parent_must_belong_to_same_conversation(self):
+        manager = DatabaseManager(self.main_db, self.legacy_db)
+        manager.initialize()
+        db = manager.connect()
+        try:
+            db.execute("""
+                INSERT INTO conversations (id, title, created_at, updated_at)
+                VALUES ('conv-a', '', 'now', 'now'), ('conv-b', '', 'now', 'now')
+            """)
+            db.execute("""
+                INSERT INTO messages (id, conversation_id, role, content, created_at)
+                VALUES ('msg-a', 'conv-a', 'user', 'A', 'now')
+            """)
+            with self.assertRaises(sqlite3.IntegrityError):
+                db.execute("""
+                    INSERT INTO messages
+                        (id, conversation_id, parent_message_id, role, content, created_at)
+                    VALUES ('msg-b', 'conv-b', 'msg-a', 'assistant', 'B', 'now')
+                """)
+        finally:
+            db.close()
 
     def test_project_manager_uses_main_database_and_keeps_crud(self):
         manager = ProjectManager(self.main_db, self.legacy_db)
