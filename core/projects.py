@@ -6,6 +6,7 @@ bude připojeno až přes samostatnou vrstvu nástrojů.
 """
 import os
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from config import Config
 from core.database import DatabaseManager
@@ -32,12 +33,26 @@ class ProjectManager:
             legacy_projects_path=self.legacy_db_path,
         ).initialize()
 
+    @contextmanager
     def _connect(self):
+        """Open a database connection and always close it after the operation.
+
+        sqlite3.Connection's built-in context manager commits or rolls back,
+        but does not close the connection. Explicit cleanup is important on
+        Windows, where an open connection can lock the database file.
+        """
         db = sqlite3.connect(self.db_path, timeout=10)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys = ON")
         db.execute("PRAGMA busy_timeout = 10000")
-        return db
+        try:
+            yield db
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
 
     @staticmethod
     def _now():
