@@ -354,4 +354,40 @@ class ConversationManager:
             return dict(row)
 
 
+    def get_recent_messages(self, conversation_id, limit=12):
+        """Return a bounded chronological tail with attachment metadata."""
+        conversation_id = self._validate_id(conversation_id, "konverzace")
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 50:
+            raise ConversationError("Limit zpráv musí být celé číslo od 1 do 50.")
+        with self._connect() as db:
+            exists = db.execute(
+                "SELECT 1 FROM conversations WHERE id = ?",
+                (conversation_id,),
+            ).fetchone()
+            if exists is None:
+                raise ConversationError("Konverzace nebyla nalezena.")
+            rows = db.execute("""
+                SELECT id, conversation_id, parent_message_id, role, content,
+                       created_at, provider, model, status, error_code,
+                       duration_ms, usage_json
+                FROM messages
+                WHERE conversation_id = ?
+                ORDER BY created_at DESC, rowid DESC
+                LIMIT ?
+            """, (conversation_id, limit)).fetchall()
+            messages = []
+            for row in reversed(rows):
+                item = dict(row)
+                item["attachments"] = [
+                    dict(attachment) for attachment in db.execute("""
+                        SELECT id, original_name, storage_path, mime_type,
+                               size_bytes, sha256, created_at
+                        FROM attachments WHERE message_id = ?
+                        ORDER BY created_at, id
+                    """, (row["id"],)).fetchall()
+                ]
+                messages.append(item)
+            return messages
+
+
 conversation_manager = ConversationManager()
