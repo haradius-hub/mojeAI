@@ -170,5 +170,19 @@ class ConversationManagerTests(unittest.TestCase):
         )
 
 
+    def test_recent_messages_returns_only_bounded_chronological_tail(self):
+        conversation = self.manager.create_conversation("Dlouhý chat")
+        created = []
+        for index in range(5):
+            created.append(self.manager.add_message(
+                conversation["id"], "user", "Zpráva " + str(index)
+            ))
+        recent = self.manager.get_recent_messages(conversation["id"], limit=3)
+        self.assertEqual(
+            [message["content"] for message in recent],
+            ["Zpráva 2", "Zpráva 3", "Zpráva 4"],
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
