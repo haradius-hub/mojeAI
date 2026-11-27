@@ -207,12 +207,16 @@ async function ulozPrompt() {
 async function ulozInternet() {
     const povolen = document.getElementById('internetPovolen').checked;
     try {
-        await fetch('/api/config', {
+        const res = await fetch('/api/config', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ internet: povolen })
         });
-        zobrazToast(povolen ? '✅ Internet povolen' : '❌ Internet zakázán');
+        const data = await res.json();
+        if (!res.ok || data.status !== 'ok') {
+            throw new Error(data.zprava || 'HTTP ' + res.status);
+        }
+        zobrazToast(povolen ? '✅ Internet povolen' : 'Internet zakázán');
     } catch (e) {
         zobrazToast('❌ Chyba', true);
     }
@@ -477,6 +481,7 @@ async function poslatDotaz() {
         messages.scrollTop = messages.scrollHeight;
         document.getElementById('statusText').textContent = '✅ Hotovo';
         nactiPamet();
+        await nactiKonverzace();
     } catch (err) {
         messages.insertAdjacentHTML('beforeend', `<div class="message assistant" style="color:#f85149;">❌ Chyba: ${escapeHtml(err.message)}</div>`);
         document.getElementById('statusText').textContent = '❌ Chyba';
@@ -489,6 +494,213 @@ async function poslatDotaz() {
         }
     }
 }
+
+
+
+// ====== SPRÁVA HISTORIE KONVERZACÍ ======
+let posledniPanel = "conversations";
+let pretahovanaKonverzace = null;
+
+function prepniPanel(panel) {
+    posledniPanel = panel === "settings" ? "settings" : "conversations";
+    document.getElementById("conversationsPanel").hidden = posledniPanel !== "conversations";
+    document.getElementById("settingsPanel").hidden = posledniPanel !== "settings";
+    document.getElementById("conversationsTab").classList.toggle("active", posledniPanel === "conversations");
+    document.getElementById("settingsTab").classList.toggle("active", posledniPanel === "settings");
+    document.getElementById("sidebarSectionTitle").textContent =
+        posledniPanel === "settings" ? "Nastavení" : "Konverzace";
+}
+
+function novyChat() {
+    aktivniKonverzaceId = null;
+    document.getElementById("messages").innerHTML =
+        '<div class="message assistant">👋 Ahoj! Zeptej se mě na cokoli. Mám přístup k tvé paměti a připojeným složkám.<span class="time">Právě teď</span></div>';
+    document.getElementById("statusText").textContent = "✅ Nová konverzace";
+    document.getElementById("userInput").focus();
+    nactiKonverzace();
+}
+
+function vytvorPolozkuKonverzace(conversation, pinned) {
+    const item = document.createElement("div");
+    item.className = "conversation-item" +
+        (conversation.id === aktivniKonverzaceId ? " active" : "");
+    item.dataset.id = conversation.id;
+    item.draggable = pinned && !document.getElementById("conversationSearch").value.trim();
+
+    const open = document.createElement("button");
+    open.type = "button";
+    open.className = "conversation-open";
+    open.textContent = conversation.title || "Nová konverzace";
+    open.title = (conversation.title || "Nová konverzace") +
+        " · " + conversation.message_count + " zpráv";
+    open.addEventListener("click", () => otevriKonverzaci(conversation.id));
+
+    const pin = document.createElement("button");
+    pin.type = "button";
+    pin.className = "conversation-pin";
+    pin.textContent = pinned ? "📌" : "📍";
+    pin.title = pinned ? "Odepnout konverzaci" : "Připnout konverzaci";
+    pin.setAttribute("aria-label", pin.title);
+    pin.addEventListener("click", () => zmenPripnuti(conversation.id, !pinned));
+
+    item.append(open, pin);
+    if (pinned) {
+        const order = document.createElement("span");
+        order.className = "conversation-order";
+        order.textContent = String(conversation.pin_order || "");
+        item.prepend(order);
+    }
+    return item;
+}
+
+async function nactiKonverzace() {
+    const search = document.getElementById("conversationSearch").value.trim();
+    try {
+        const res = await fetch("/api/conversations?limit=100&q=" + encodeURIComponent(search), {
+            cache: "no-store"
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const data = await res.json();
+        const pinned = data.conversations.filter(item => item.is_pinned);
+        const recent = data.conversations.filter(item => !item.is_pinned);
+        const pinnedList = document.getElementById("pinnedConversations");
+        const recentList = document.getElementById("recentConversations");
+        pinnedList.replaceChildren();
+        recentList.replaceChildren();
+
+        if (!pinned.length) {
+            pinnedList.innerHTML = '<div class="conversation-empty">Zatím žádné připnuté chaty</div>';
+        } else {
+            pinned.forEach(item => pinnedList.appendChild(
+                vytvorPolozkuKonverzace(item, true)
+            ));
+        }
+        if (!recent.length) {
+            recentList.innerHTML = '<div class="conversation-empty">Žádné další konverzace</div>';
+        } else {
+            recent.forEach(item => recentList.appendChild(
+                vytvorPolozkuKonverzace(item, false)
+            ));
+        }
+    } catch (error) {
+        console.error("Chyba načítání konverzací:", error);
+        document.getElementById("recentConversations").innerHTML =
+            '<div class="conversation-empty error">Historii se nepodařilo načíst</div>';
+    }
+}
+
+async function zmenPripnuti(conversationId, pinned) {
+    try {
+        const res = await fetch("/api/conversations/" + encodeURIComponent(conversationId) + "/pin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pinned })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
+        await nactiKonverzace();
+    } catch (error) {
+        zobrazToast("Připnutí se nepodařilo: " + error.message, true);
+    }
+}
+
+async function ulozPoradiPripnutych() {
+    const ids = Array.from(
+        document.getElementById("pinnedConversations").querySelectorAll(".conversation-item")
+    ).map(item => item.dataset.id);
+    try {
+        const res = await fetch("/api/conversations/pinned-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conversation_ids: ids })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
+        await nactiKonverzace();
+    } catch (error) {
+        zobrazToast("Změnu pořadí se nepodařilo uložit: " + error.message, true);
+        await nactiKonverzace();
+    }
+}
+
+async function otevriKonverzaci(conversationId) {
+    try {
+        const res = await fetch("/api/conversations/" + encodeURIComponent(conversationId), {
+            cache: "no-store"
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "HTTP " + res.status);
+        aktivniKonverzaceId = data.id;
+        const messages = document.getElementById("messages");
+        messages.replaceChildren();
+
+        (data.messages || []).forEach(message => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "message " + (message.role === "user" ? "user" : "assistant");
+            const body = document.createElement("div");
+            body.innerHTML = marked.parse(message.content || "");
+            wrapper.appendChild(body);
+
+            (message.attachments || []).forEach(attachment => {
+                const link = document.createElement("a");
+                link.className = "message-attachment";
+                link.href = "/api/attachments/" + encodeURIComponent(attachment.id);
+                link.textContent = "📎 " + attachment.original_name +
+                    " (" + formatVelikostiSouboru(attachment.size_bytes) + ")";
+                link.setAttribute("download", attachment.original_name);
+                wrapper.appendChild(link);
+            });
+
+            const time = document.createElement("span");
+            time.className = "time";
+            const parsedDate = new Date(message.created_at);
+            time.textContent = Number.isNaN(parsedDate.getTime())
+                ? "" : parsedDate.toLocaleString();
+            wrapper.appendChild(time);
+            messages.appendChild(wrapper);
+        });
+        if (!data.messages || !data.messages.length) {
+            messages.innerHTML = '<div class="message assistant">Tato konverzace zatím neobsahuje zprávy.</div>';
+        }
+        messages.scrollTop = messages.scrollHeight;
+        document.getElementById("statusText").textContent = "📂 Otevřená konverzace";
+        await nactiKonverzace();
+    } catch (error) {
+        zobrazToast("Konverzaci se nepodařilo otevřít: " + error.message, true);
+    }
+}
+
+document.getElementById("conversationSearch").addEventListener("input", nactiKonverzace);
+
+const pinnedContainer = document.getElementById("pinnedConversations");
+pinnedContainer.addEventListener("dragstart", event => {
+    const item = event.target.closest(".conversation-item");
+    if (!item || !item.draggable) return;
+    pretahovanaKonverzace = item;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", item.dataset.id);
+});
+pinnedContainer.addEventListener("dragover", event => {
+    event.preventDefault();
+    const target = event.target.closest(".conversation-item");
+    if (!target || !pretahovanaKonverzace || target === pretahovanaKonverzace) return;
+    const bounds = target.getBoundingClientRect();
+    const after = event.clientY > bounds.top + bounds.height / 2;
+    pinnedContainer.insertBefore(
+        pretahovanaKonverzace,
+        after ? target.nextSibling : target
+    );
+});
+pinnedContainer.addEventListener("drop", async event => {
+    event.preventDefault();
+    if (!pretahovanaKonverzace) return;
+    pretahovanaKonverzace = null;
+    await ulozPoradiPripnutych();
+});
+pinnedContainer.addEventListener("dragend", () => {
+    pretahovanaKonverzace = null;
+});
+
 
 // ====== PAMĚŤ ======
 async function nactiPamet() {
@@ -536,5 +748,7 @@ document.getElementById('userInput').addEventListener('input', function() {
 });
 
 // ====== START APLIKACE ======
+prepniPanel("conversations");
 nactiKonfiguraci();
+nactiKonverzace();
 setInterval(nactiPamet, 15000);
