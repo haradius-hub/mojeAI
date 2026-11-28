@@ -219,31 +219,31 @@ class ChatApiHistoryTests(unittest.TestCase):
                 },
                 content_type="multipart/form-data",
             )
-        self.assertEqual(response.status_code, 200)
-        data = response.get_json()
-        conversation = chat_route.conversation_manager.get_conversation(
-            data["conversation_id"]
-        )
-        attachment = conversation["messages"][0]["attachments"][0]
-        stored_path = os.path.join(
-            chat_route.Config.DATA_DIR, attachment["storage_path"]
-        )
-        self.assertTrue(os.path.isfile(stored_path))
-        with open(stored_path, "r", encoding="utf-8") as stored:
-            self.assertIn("Trvalý soubor", stored.read())
+            self.assertEqual(response.status_code, 200)
+            data = response.get_json()
+            conversation = chat_route.conversation_manager.get_conversation(
+                data["conversation_id"]
+            )
+            attachment = conversation["messages"][0]["attachments"][0]
+            stored_path = os.path.join(
+                chat_route.Config.DATA_DIR, attachment["storage_path"]
+            )
+            self.assertTrue(os.path.isfile(stored_path))
+            with open(stored_path, "r", encoding="utf-8") as stored:
+                self.assertIn("Trvalý soubor", stored.read())
 
-        followup = self.client.post(
-            "/api/chat",
-            json={
-                "dotaz": "Co obsahoval dříve přiložený soubor?",
-                "model": "gemini",
-                "conversation_id": data["conversation_id"],
-            },
-        )
-        self.assertEqual(followup.status_code, 200)
-        followup_prompt = generate.call_args_list[1].args[0]
-        self.assertIn("Dříve přiložený soubor", followup_prompt)
-        self.assertIn("Trvalý soubor", followup_prompt)
+            followup = self.client.post(
+                "/api/chat",
+                json={
+                    "dotaz": "Co obsahoval dříve přiložený soubor?",
+                    "model": "gemini",
+                    "conversation_id": data["conversation_id"],
+                },
+            )
+            self.assertEqual(followup.status_code, 200)
+            followup_prompt = generate.call_args_list[1].args[0]
+            self.assertIn("Dříve přiložený soubor", followup_prompt)
+            self.assertIn("Trvalý soubor", followup_prompt)
 
     def test_conversation_list_pin_and_reorder_endpoints(self):
         with patch.object(
